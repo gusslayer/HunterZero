@@ -14,7 +14,13 @@ def draw_icon(surface: pygame.Surface, name: str, rect: pygame.Rect, color: tupl
             vector = pygame.Vector2(1, 0).rotate(angle)
             start = pygame.Vector2(center) + vector * 9
             end = pygame.Vector2(center) + vector * 13
-            pygame.draw.line(surface, color, start, end, 3)
+            pygame.draw.line(
+                surface,
+                color,
+                (round(start.x), round(start.y)),
+                (round(end.x), round(end.y)),
+                3,
+            )
     elif name == "folder":
         pygame.draw.rect(surface, color, (x + 2, y + 8, w - 4, h - 12), 2, border_radius=2)
         pygame.draw.line(surface, color, (x + 3, y + 8), (x + 12, y + 8), 3)

@@ -23,7 +23,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y \
 
 python3 -m venv --system-site-packages "$APP_DIR/.venv"
 usermod -aG input,video "$APP_USER"
-install -d -o "$APP_USER" -g "$APP_USER" \
+install -d -o "$APP_USER" \
     "$APP_DIR/logs" "$APP_DIR/state/heartbeats" \
     "$APP_DIR/data/scans" "$APP_DIR/data/captures" \
     "$APP_DIR/data/reports" "$APP_DIR/data/targets"
