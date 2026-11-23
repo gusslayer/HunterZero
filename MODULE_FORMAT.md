@@ -42,6 +42,10 @@ Campos:
   `play`, `power`, `activity` y otros catalogados en `core/plugins.py`.
 - `version`: versión textual del módulo.
 - `screen`: siempre `screen.py`.
+- `deps` (opcional): lista de nombres de paquetes APT que el módulo requiere
+  (herramientas como `nmap` o paquetes de desarrollo como `python3-yaml`); se
+  instalan con `sudo bash deploy/deps.sh` durante la instalación y en cada
+  actualización.
 
 El catálogo valida los manifiestos con `yaml.safe_load`. Los módulos inválidos
 se omiten y el error se registra en `logs/app.log`.

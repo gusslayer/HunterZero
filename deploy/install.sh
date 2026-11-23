@@ -31,7 +31,9 @@ if ! id "$APP_USER" >/dev/null 2>&1; then
 fi
 
 apt-get update
-# Paquetes base, Pygame/YAML y herramientas usadas por los módulos activos.
+# Paquetes base, Pygame/YAML y herramientas compartidas del sistema. Las
+# dependencias de los módulos (`iputils-ping`, `nmap`) se instalan después con
+# deploy/deps.sh, que lee los campos `deps:` de los manifiestos de modules/*/.
 # Todos deben provenir de APT para conservar compatibilidad armhf/ARMv6.
 # Descartados por no usarse en el código: curl, kbd, procps, iproute2, kmod y
 # fonts-dejavu-core (el código lee /proc y /sys directamente y usa la fuente
@@ -40,8 +42,7 @@ apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
     ca-certificates git sudo udev dbus python3 python3-venv python3-pip \
     python3-pygame python3-yaml \
-    libsdl2-2.0-0 libsdl2-ttf-2.0-0 libsdl2-gfx-1.0-0 \
-    iputils-ping nmap
+    libsdl2-2.0-0 libsdl2-ttf-2.0-0 libsdl2-gfx-1.0-0
 
 # Verifica que el binario instalado tenga punteros de 32 bits.
 if ! python3 -c 'import struct; raise SystemExit(0 if struct.calcsize("P") == 4 else 1)' >/dev/null 2>&1; then
@@ -62,6 +63,9 @@ sed -e "s|@APP_USER@|$APP_USER|g" -e "s|@APP_DIR@|$APP_DIR|g" \
 install -m 0644 "$service_tmp" /etc/systemd/system/hunterzero.service
 rm -f "$service_tmp"
 systemctl daemon-reload
+
+# Instala en APT los paquetes declarados por los módulos de la copia clonada.
+bash "$APP_DIR/deploy/deps.sh"
 
 echo "Instalación lista. Cierra y abre sesión para aplicar los grupos input/video."
 echo "Prueba la interfaz y luego ejecuta: sudo systemctl enable --now hunterzero.service"

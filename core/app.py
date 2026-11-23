@@ -10,7 +10,7 @@ from core.config import AppSettings
 from core.input import BACK, DOWN, OPEN, QUIT, RUN, UP, action_from_event, initialize_joysticks
 from core.logger import configure_logging
 from core.menu import MenuController
-from core.plugins import PluginCatalog
+from core.plugins import Plugin, PluginCatalog
 from core.process_manager import ProcessManager
 from core.screen import create_display
 from core.state import UIState
@@ -19,8 +19,10 @@ from core.ui import icons
 from core.ui.footer import draw_footer
 from core.ui.hud import draw_hud
 from core.ui.layout import MenuLayout
+from core.ui.update_screen import UpdateScreen
 from modules.nmap.screen import NmapScreen
 from modules.ping.screen import PingScreen
+from modules.proc_monitor.screen import ProcMonitorScreen
 from modules.system_monitor.screen import SystemMonitorScreen
 
 
@@ -38,6 +40,8 @@ class HunterZeroApp:
             "ping": PingScreen,
             "nmap": NmapScreen,
             "system_monitor": SystemMonitorScreen,
+            "proc_monitor": ProcMonitorScreen,
+            "update": UpdateScreen,
         }
         self.catalog = PluginCatalog(ROOT / "modules", self.logger)
         registered_plugins = []
@@ -48,7 +52,15 @@ class HunterZeroApp:
                 message = f"{plugin.identifier}: pantalla no registrada en core/app.py"
                 self.catalog.errors.append(message)
                 self.logger.error("Módulo omitido (%s)", message)
-        self.menu = MenuController(registered_plugins)
+        self.update_plugin = Plugin(
+            identifier="update",
+            name="ACTUALIZAR HUNTERZERO",
+            description="Ejecuta 'git pull --ff-only' y reinicia el servicio.",
+            icon="rotate-cw",
+            path=ROOT,
+            screen_path=ROOT / "core" / "ui" / "update_screen.py",
+        )
+        self.menu = MenuController([*registered_plugins, self.update_plugin])
         self.state = UIState(ROOT / "state" / "ui_state.json")
         self.state.load(len(self.menu.plugins))
         self.menu.selected = self.state.selected
@@ -58,7 +70,9 @@ class HunterZeroApp:
         self.last_stats = 0.0
         self.last_heartbeat = 0.0
         self.running = True
-        self.tool_screen: PingScreen | NmapScreen | SystemMonitorScreen | None = None
+        self.tool_screen: (
+            PingScreen | NmapScreen | SystemMonitorScreen | ProcMonitorScreen | UpdateScreen | None
+        ) = None
         self.joysticks = []
         self.surface: pygame.Surface
         self.title_font: pygame.font.Font

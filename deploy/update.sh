@@ -8,5 +8,9 @@ if [[ "${EUID}" -eq 0 ]]; then
     exit 1
 fi
 git -C "$APP_DIR" pull --ff-only
+
+# Instala en APT los paquetes nuevos declarados por los módulos tras el pull.
+sudo bash "$APP_DIR/deploy/deps.sh"
+
 sudo systemctl restart hunterzero.service
 sudo systemctl --no-pager --full status hunterzero.service

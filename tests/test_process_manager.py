@@ -40,6 +40,42 @@ class ProcessManagerTests(unittest.TestCase):
 
         self.assertEqual(manager.message, "Tiempo límite fuera del rango permitido.")
 
+    def test_start_update_is_rejected_when_bash_is_missing(self):
+        """Refuse the update launch when bash is not on PATH."""
+        with tempfile.TemporaryDirectory() as temporary:
+            manager = ProcessManager(Path(temporary), logging.getLogger("test.processes"))
+            with patch("core.process_manager.shutil.which", return_value=None):
+                started = manager.start_update()
+
+        self.assertFalse(started)
+        self.assertEqual(
+            manager.message,
+            "No está instalado bash; no se puede actualizar ahora.",
+        )
+
+    def test_update_script_is_not_a_tool_command(self):
+        """Keep bash out of the tool allowlist so only the update screen uses it."""
+        with tempfile.TemporaryDirectory() as temporary:
+            manager = ProcessManager(Path(temporary), logging.getLogger("test.processes"))
+            self.assertFalse(manager.start_command("bash", ["bash", "-c", "echo"], 10))
+
+        self.assertEqual(manager.message, "Comando no permitido.")
+
+    def test_update_failure_mentions_installing_declared_dependencies(self):
+        """Show the dependency-install hint when the update command fails."""
+        with tempfile.TemporaryDirectory() as temporary:
+            manager = ProcessManager(Path(temporary), logging.getLogger("test.processes"))
+            with patch("core.process_manager.shutil.which", return_value="/usr/bin/bash"), patch(
+                "core.process_manager.subprocess.Popen"
+            ) as popen:
+                popen.return_value.pid = 42
+                popen.return_value.poll.return_value = 1
+                self.assertTrue(manager.start_update())
+                manager.update()
+
+        self.assertIn("terminó con error (1)", manager.message)
+        self.assertIn("sudo bash deploy/deps.sh", manager.message)
+
 
 if __name__ == "__main__":
     unittest.main()

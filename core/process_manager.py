@@ -9,6 +9,11 @@ from pathlib import Path
 
 
 ALLOWED_COMMANDS = frozenset({"ping", "nmap"})
+UPDATE_LABEL = "Actualización de HunterZero"
+UPDATE_DEPENDENCY_HINT = (
+    "Si falta una dependencia, instala los paquetes declarados en los manifiestos:"
+    " sudo bash deploy/deps.sh."
+)
 MAX_DISPLAY_OUTPUT = 4096
 
 
@@ -36,15 +41,40 @@ class ProcessManager:
 
     def start_command(self, label: str, command: list[str], timeout_seconds: int) -> bool:
         """Start a validated ping or Nmap argv list with captured output."""
+        if not command or command[0] not in ALLOWED_COMMANDS:
+            self.message = "Comando no permitido."
+            self.logger.error("Se bloqueó el intento de lanzar un comando no permitido.")
+            return False
+        return self._launch(
+            label,
+            command,
+            timeout_seconds,
+            f"No está instalado {command[0]}; instala ping y nmap.",
+        )
+
+    def start_update(self, timeout_seconds: int = 180) -> bool:
+        """Run deploy/update.sh with the same guarded launcher as tool commands."""
+        command = ["bash", str(self.root / "deploy" / "update.sh")]
+        return self._launch(
+            UPDATE_LABEL,
+            command,
+            timeout_seconds,
+            "No está instalado bash; no se puede actualizar ahora.",
+        )
+
+    def _launch(
+        self,
+        label: str,
+        command: list[str],
+        timeout_seconds: int,
+        missing_message: str,
+    ) -> bool:
+        """Shared guards and subprocess launch for tool and update commands."""
         if self.running and self.running.process.poll() is None:
             self.message = "Ya hay una herramienta en ejecución."
             return False
         if hasattr(os, "geteuid") and os.geteuid() == 0:
             self.message = "Por seguridad, no ejecutes HunterZero como root."
-            return False
-        if not command or command[0] not in ALLOWED_COMMANDS:
-            self.message = "Comando no permitido."
-            self.logger.error("Se bloqueó el intento de lanzar un comando no permitido.")
             return False
         if not 1 <= timeout_seconds <= 180:
             self.message = "Tiempo límite fuera del rango permitido."
@@ -54,7 +84,7 @@ class ProcessManager:
             return False
         executable = shutil.which(command[0])
         if executable is None:
-            self.message = f"No está instalado {command[0]}; instala ping y nmap."
+            self.message = missing_message
             self.logger.error("No se encontró el ejecutable permitido %s.", command[0])
             return False
 
@@ -100,6 +130,8 @@ class ProcessManager:
             self._stop_process(task.process)
             self.output = self._read_output(task.output_path)
             self.message = f"Tiempo agotado: {task.label}."
+            if task.label == UPDATE_LABEL:
+                self.message += " " + UPDATE_DEPENDENCY_HINT
             self.logger.error("Se agotó el tiempo de %s.", task.label)
             self.running = None
             return
@@ -114,6 +146,8 @@ class ProcessManager:
             self.logger.info("%s finalizó correctamente.", task.label)
         else:
             self.message = f"{task.label}: terminó con error ({return_code})."
+            if task.label == UPDATE_LABEL:
+                self.message += " " + UPDATE_DEPENDENCY_HINT
             self.logger.error("%s terminó con código %d.", task.label, return_code)
         self.running = None
 

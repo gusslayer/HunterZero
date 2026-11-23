@@ -6,7 +6,7 @@ import pygame
 from core import theme
 from core.input import BACK, OPEN
 from core.process_manager import ProcessManager
-from core.system_stats import SystemStats
+from core.system_stats import SystemStats, disk_usage_percent
 from core.ui.help_view import draw_help_view
 
 
@@ -52,7 +52,7 @@ class SystemMonitorScreen:
                     (
                         "LECTURAS LOCALES",
                         (
-                            "CPU, RAM, temperatura, Wi-Fi, bateria y hora.",
+                            "CPU, RAM, temperatura, Wi-Fi, bateria, disco y hora.",
                             "Temperatura y bateria dependen de lo que exponga el sistema.",
                         ),
                     ),
@@ -67,6 +67,7 @@ class SystemMonitorScreen:
         values = (
             f"CPU: {stats.cpu_percent}%",
             f"RAM: {stats.memory_percent}%",
+            f"DISK: {disk_usage_percent(theme.ROOT)}%",
             f"TEMPERATURA: {temperature}",
             f"WI-FI: {'CONECTADO' if stats.wifi_connected else 'NO DISPONIBLE'}",
             f"BATERIA: {battery}",

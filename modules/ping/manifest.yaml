@@ -5,3 +5,5 @@ description: Envía paquetes ICMP a una IPv4 privada introducida con el D-pad.
 icon: network
 version: "0.1.0"
 screen: screen.py
+deps:
+  - iputils-ping

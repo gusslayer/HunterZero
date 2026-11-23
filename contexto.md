@@ -55,6 +55,11 @@ marcadores vacíos ni una terminal genérica en el menú.
 | B | Cancelar/volver; desde el menú principal cierra la interfaz |
 | START | Abrir el módulo seleccionado |
 
+El menú principal lista los módulos; su última fila es **ACTUALIZAR HUNTERZERO**
+(icono `rotate-cw`). Abrirla muestra la pantalla de actualización: A ejecuta
+`deploy/update.sh`, B desde la fase de confirmación vuelve al menú y durante
+la ejecución lo cancela.
+
 Pygame SDL GameController normaliza botones/d-pad. Para mandos no mapeados se
 mantiene fallback de joystick: hat/axis y botones físicos estándar A=0, B=1,
 START=6. Los eventos legacy del mismo control mapeado se ignoran para evitar
@@ -77,12 +82,13 @@ modules/
   ping/                   # manifiesto, builder, validación y pantalla Ping
   nmap/                   # manifiesto, builder, validación y pantalla Nmap
   system_monitor/         # pantalla y ayuda de métricas locales
+  proc_monitor/           # lista de procesos activos, estilo top resumido
 assets/fonts/             # Press Start 2P y licencia OFL
 assets/icons/             # PNG originales de los iconos del menú
 config/                   # ejemplo versionado, configuración local ignorada
 state/heartbeats/         # estado runtime; no se sube a Git
 logs/                     # logs de aplicación y comandos
-deploy/                   # instalador, actualizador y unidad systemd
+deploy/                   # instalador, instalador de deps, actualizador y unidad systemd
 tests/                    # pruebas sin operaciones reales sobre la red
 ```
 
@@ -98,7 +104,9 @@ El lanzador acepta únicamente ejecutables incluidos en su allowlist (`ping`,
 `nmap`), argv construido por funciones tipadas, `shell=False`, entrada estándar
 cerrada, timeout, salida limitada y cancelación. No interpolar comandos de
 texto ni añadir una terminal genérica. No ejecutar Pygame como root ni agregar
-reglas sudo sin contraseña.
+reglas sudo sin contraseña. El botón de actualización del menú ejecuta
+`deploy/update.sh` mediante `ProcessManager.start_update`, compartiendo
+esos controles y rechazando el comando si `bash` no está disponible.
 
 ## Trazabilidad de UI y errores
 
@@ -127,7 +135,9 @@ reglas sudo sin contraseña.
 - Usuario estándar agregado a los grupos `input` y `video`.
 - Probar driver SDL, pantalla y gamepad desde la consola antes de habilitar
   `hunterzero.service` en tty1. El modo KMS/DRM depende de la imagen GPi.
-- `deploy/update.sh` realiza `git pull --ff-only` y reinicia el servicio.
+- `deploy/update.sh` realiza `git pull --ff-only`, instala los paquetes APT
+  nuevos declarados por los módulos con `deploy/deps.sh` y reinicia el
+  servicio.
 
 ## Licencias y calidad
 

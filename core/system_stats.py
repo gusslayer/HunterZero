@@ -1,4 +1,5 @@
 import os
+import shutil
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -13,6 +14,17 @@ class SystemStats:
     battery_percent: int | None
     clock: str
     wifi_connected: bool
+
+
+def disk_usage_percent(path: Path) -> int:
+    """Return the used-percent of the filesystem containing path."""
+    try:
+        usage = shutil.disk_usage(path)
+    except OSError:
+        return 0
+    if usage.total <= 0:
+        return 0
+    return max(0, min(100, round(100 * usage.used / usage.total)))
 
 
 class StatsReader:

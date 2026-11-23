@@ -5,3 +5,5 @@ description: Escanea puertos TCP comunes de una IPv4 privada autorizada y script
 icon: chart
 version: "0.1.0"
 screen: screen.py
+deps:
+  - nmap

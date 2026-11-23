@@ -1,0 +1,7 @@
+# Identificador, pantalla y metadatos registrados por PluginCatalog.
+id: proc_monitor
+name: Monitor de Procesos
+description: Lista los procesos más activos con CPU, memoria y tiempo transcurrido.
+icon: activity
+version: "0.1.0"
+screen: screen.py

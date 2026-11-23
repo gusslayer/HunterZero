@@ -64,7 +64,9 @@ git pull --ff-only
 sudo systemctl restart hunterzero.service
 ```
 
-También se puede usar `bash deploy/update.sh`, que realiza `git pull --ff-only` y reinicia el servicio. Las preferencias, heartbeats, datos, logs y configuración local quedan fuera de Git.
+También se puede usar `bash deploy/update.sh`, que realiza `git pull --ff-only`, instala en APT los paquetes nuevos declarados por los módulos (`deploy/deps.sh`) y reinicia el servicio. Las preferencias, heartbeats, datos, logs y configuración local quedan fuera de Git.
+
+Desde la interfaz elige **ACTUALIZAR HUNTERZERO** en el menú principal y pulsa A; revisa el progreso en la pantalla de actualización y vuelve con A/B cuando termine.
 
 ## Configuración
 
@@ -93,6 +95,7 @@ core/ui/               # Layout, HUD, ayuda y pantallas parametrizadas reutiliza
 modules/ping/          # Especificación, validación, comando y pantalla de Ping
 modules/nmap/          # Especificación, validación, comando y pantalla de Nmap
 modules/system_monitor/ # Pantalla independiente de métricas locales
+modules/proc_monitor/   # Lista de procesos activos, estilo top resumido
 assets/fonts/          # Press Start 2P y licencia OFL
 assets/icons/          # PNG utilizados por los iconos del menú
 config/               # Ejemplo versionado y configuración local ignorada por Git
@@ -107,7 +110,7 @@ Consulta [MODULE_FORMAT.md](MODULE_FORMAT.md) para el formato completo y obligat
 
 1. Crea `modules/<id>/manifest.yaml` con `id` (igual al nombre de carpeta), `name`, `description`, `icon` y `screen: screen.py`.
 2. Implementa la pantalla, parámetros y ayuda propios en `modules/<id>/screen.py`. Registra la clase en `core/app.py`; no cargues código arbitrario desde el manifiesto.
-3. Si la función necesita un proceso, agrega un builder de argv validado en el módulo y añade el ejecutable a la allowlist de `core/process_manager.py` tras revisar sus límites de seguridad.
+3. Si la función necesita un proceso, agrega un builder de argv validado en el módulo y añade el ejecutable a la allowlist de `core/process_manager.py` tras revisar sus límites de seguridad. Si el módulo necesita un ejecutable o paquete APT nuevo, decláralo con un campo `deps:` (lista de nombres de paquetes) en el manifiesto; `deploy/deps.sh` los instala durante `deploy/install.sh` y en cada actualización.
 4. Reutiliza las vistas de destino, parámetros y ayuda de `core/ui/` cuando correspondan; una función sin comportamiento real no debe tener manifiesto ni mostrarse en el menú.
 5. No uses `shell=True`, no eleves privilegios ni aceptes comandos de texto desde la pantalla.
 
