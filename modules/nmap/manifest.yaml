@@ -1,7 +1,7 @@
 # Identificador, pantalla y metadatos registrados por PluginCatalog.
 id: nmap
 name: Nmap
-description: Escanea puertos TCP comunes de una IPv4 privada autorizada.
+description: Escanea puertos TCP comunes de una IPv4 privada autorizada y scripts NSE de la categoría vuln.
 icon: chart
 version: "0.1.0"
 screen: screen.py

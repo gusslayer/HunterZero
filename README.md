@@ -9,7 +9,7 @@
 
 Interfaz modular para GPi Case 2W y Raspberry Pi Zero W, con Pygame, navegación por gamepad y estética retro. La resolución base es 640x480; los iconos se dibujan localmente y la tipografía Press Start 2P se distribuye bajo SIL Open Font License.
 
-> Ping y Nmap son módulos independientes con opciones, validación y comandos propios; comparten únicamente la vista de configuración/ayuda y el editor IPv4. El destino se ingresa octeto por octeto con el D-pad. Ping envía 1–4 paquetes; Nmap usa TCP Connect y 20/50/100 puertos comunes. Solo se aceptan IPv4 privadas y cada ejecución solicita confirmación. El Monitor del Sistema muestra métricas locales. No se incluyen módulos vacíos ni una terminal de comandos.
+> Ping y Nmap son módulos independientes con opciones, validación y comandos propios; comparten únicamente la vista de configuración/ayuda y el editor IPv4. El destino se ingresa octeto por octeto con el D-pad. Ping envía 1–4 paquetes; Nmap usa TCP Connect, 20/50/100 puertos comunes y scripts NSE de la categoría vuln. Solo se aceptan IPv4 privadas y cada ejecución solicita confirmación. El Monitor del Sistema muestra métricas locales. No se incluyen módulos vacíos ni una terminal de comandos.
 
 ## Requisitos
 
@@ -96,7 +96,6 @@ modules/system_monitor/ # Pantalla independiente de métricas locales
 assets/fonts/          # Press Start 2P y licencia OFL
 assets/icons/          # PNG utilizados por los iconos del menú
 config/               # Ejemplo versionado y configuración local ignorada por Git
-data/                 # Archivos de trabajo locales
 state/                # Estado UI y heartbeats locales
 logs/                 # Registros locales
 deploy/               # Instalación, actualización y servicio systemd

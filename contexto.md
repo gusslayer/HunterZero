@@ -29,7 +29,8 @@ las opciones de herramientas distintas.
 - Menú, manifiesto, comandos y pantalla independientes de Ping.
 - Destino manual con el mismo editor D-pad de IPv4 privada.
 - Solo escaneo `-sT` de TCP connect y ritmo `-T2`, top 20/50/100 puertos,
-  límite de tiempo y sin scripts NSE ni ejecución como root.
+  `--script vuln` (scripts NSE de la categoría vuln) y límite de tiempo;
+  sin ejecución como root.
 - Requiere confirmación explícita; B cancela el escaneo en curso.
 - Presenta el resultado del comando y permite regresar con A/B.
 - Utilizar solamente en equipos propios o con autorización.
@@ -79,7 +80,6 @@ modules/
 assets/fonts/             # Press Start 2P y licencia OFL
 assets/icons/             # PNG originales de los iconos del menú
 config/                   # ejemplo versionado, configuración local ignorada
-data/                     # datos runtime; no se suben a Git
 state/heartbeats/         # estado runtime; no se sube a Git
 logs/                     # logs de aplicación y comandos
 deploy/                   # instalador, actualizador y unidad systemd

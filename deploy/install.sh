@@ -33,11 +33,15 @@ fi
 apt-get update
 # Paquetes base, Pygame/YAML y herramientas usadas por los módulos activos.
 # Todos deben provenir de APT para conservar compatibilidad armhf/ARMv6.
+# Descartados por no usarse en el código: curl, kbd, procps, iproute2, kmod y
+# fonts-dejavu-core (el código lee /proc y /sys directamente y usa la fuente
+# Press Start 2P de assets/fonts). udev y dbus se conservan por la gestión de
+# entrada (gamepad/teclado) y la del sistema (logind/systemctl).
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    ca-certificates curl git sudo udev dbus kmod procps iproute2 kbd \
-    python3 python3-venv python3-pip python3-pygame python3-yaml \
+    ca-certificates git sudo udev dbus python3 python3-venv python3-pip \
+    python3-pygame python3-yaml \
     libsdl2-2.0-0 libsdl2-ttf-2.0-0 libsdl2-gfx-1.0-0 \
-    fonts-dejavu-core iputils-ping nmap
+    iputils-ping nmap
 
 # Verifica que el binario instalado tenga punteros de 32 bits.
 if ! python3 -c 'import struct; raise SystemExit(0 if struct.calcsize("P") == 4 else 1)' >/dev/null 2>&1; then
@@ -50,9 +54,7 @@ rm -rf "$APP_DIR/.venv"
 runuser -u "$APP_USER" -- python3 -m venv --system-site-packages "$APP_DIR/.venv"
 usermod -aG input,video "$APP_USER"
 install -d -o "$APP_USER" \
-    "$APP_DIR/logs" "$APP_DIR/state/heartbeats" \
-    "$APP_DIR/data/scans" "$APP_DIR/data/captures" \
-    "$APP_DIR/data/reports" "$APP_DIR/data/targets"
+    "$APP_DIR/logs" "$APP_DIR/state/heartbeats"
 
 service_tmp="$(mktemp)"
 sed -e "s|@APP_USER@|$APP_USER|g" -e "s|@APP_DIR@|$APP_DIR|g" \

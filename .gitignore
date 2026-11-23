@@ -9,16 +9,4 @@ state/*
 !state/heartbeats/
 state/heartbeats/*
 !state/heartbeats/.gitkeep
-data/*
-!data/scans/
-!data/captures/
-!data/reports/
-!data/targets/
-data/scans/*
-data/captures/*
-data/reports/*
-data/targets/*
-!data/scans/.gitkeep
-!data/captures/.gitkeep
-!data/reports/.gitkeep
-!data/targets/.gitkeep
+

@@ -6,7 +6,7 @@ from modules.nmap.main import PORT_COUNTS, build_nmap_command
 
 
 class NmapScreen(ParameterizedToolScreen):
-    """Configure and run a conservative TCP connect scan."""
+    """Configure and run a conservative TCP-connect scan with NSE vulnerability scripts."""
 
     def __init__(self) -> None:
         """Set Nmap's port-count range, timeout, and in-app instructions."""
@@ -28,10 +28,10 @@ class NmapScreen(ParameterizedToolScreen):
                     "EJECUTAR",
                     (
                         "Selecciona INICIAR NMAP y confirma con A; B cancela.",
-                        "Usa TCP connect lento; solo IPv4 privadas autorizadas.",
+                        "Usa TCP connect lento y scripts NSE de la categoría vuln; solo IPv4 privadas autorizadas.",
                     ),
                 ),
             ),
             command_builder=build_nmap_command,
-            timeout_seconds=lambda _count: 100,
+            timeout_seconds=lambda _count: 200,
         )

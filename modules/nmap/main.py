@@ -26,7 +26,7 @@ def validate_target(target: str) -> str:
 
 
 def build_nmap_command(target: str, port_count: int = 20) -> list[str]:
-    """Build a slow, unprivileged TCP-connect scan limited to common ports."""
+    """Build a slow, unprivileged TCP-connect scan with NSE vuln scripts."""
     normalized_target = validate_target(target)
     if port_count not in PORT_COUNTS:
         raise ValueError(f"Los puertos deben ser uno de {PORT_COUNTS}.")
@@ -41,5 +41,7 @@ def build_nmap_command(target: str, port_count: int = 20) -> list[str]:
         "--open",
         "--host-timeout",
         "90s",
+        "--script",
+        "vuln",
         normalized_target,
     ]

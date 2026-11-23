@@ -100,6 +100,7 @@ class ToolScreenTests(unittest.TestCase):
         self.assertIn("--top-ports", processes.commands[0][1])
         self.assertIn("50", processes.commands[0][1])
         self.assertIn("192.168.2.1", processes.commands[0][1])
+        self.assertIn("--script", processes.commands[0][1])
         self.assertEqual(screen.phase, "running")
         screen.handle(BACK, processes)
 
