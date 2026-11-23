@@ -1,15 +1,18 @@
 [Unit]
 Description=HunterZero GPi interface
+# Espera a que existan las sesiones locales y evita arrancar sobre una consola gráfica activa.
 After=systemd-user-sessions.service
 Conflicts=getty@tty1.service
 
 [Service]
 Type=simple
 User=@APP_USER@
+# Permite leer gamepad y framebuffer; el usuario nunca debe ejecutarse como root.
 SupplementaryGroups=input video
 WorkingDirectory=@APP_DIR@
 Environment=SDL_VIDEODRIVER=kmsdrm
 Environment=HUNTERZERO_FULLSCREEN=1
+Environment=PYTHONUNBUFFERED=1
 ExecStart=@APP_DIR@/.venv/bin/python @APP_DIR@/main.py
 Restart=on-failure
 RestartSec=3

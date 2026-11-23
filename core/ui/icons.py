@@ -1,8 +1,37 @@
+from pathlib import Path
+
 import pygame
 
 
+ROOT = Path(__file__).resolve().parents[2]
+ICON_ROOT = ROOT / "assets" / "icons"
+_icon_cache: dict[str, pygame.Surface] = {}
+
+
+def load_icon(name: str) -> pygame.Surface | None:
+    """Load an optional menu icon PNG and cache it for the event loop."""
+    if name in _icon_cache:
+        return _icon_cache[name]
+    path = ICON_ROOT / f"{name}.png"
+    if not path.is_file():
+        return None
+    try:
+        icon = pygame.image.load(str(path))
+    except (pygame.error, OSError):
+        return None
+    _icon_cache[name] = icon
+    return icon
+
+
 def draw_icon(surface: pygame.Surface, name: str, rect: pygame.Rect, color: tuple[int, int, int]) -> None:
-    """Draw a small vector icon for a menu item using Pygame primitives."""
+    """Draw a PNG menu icon, using its original vector fallback for old assets."""
+    icon = load_icon(name)
+    if icon is not None:
+        scaled = pygame.transform.smoothscale(icon, (rect.w, rect.h))
+        tinted = scaled.copy()
+        tinted.fill(color, special_flags=pygame.BLEND_RGB_MULT)
+        surface.blit(tinted, rect)
+        return
     x, y, w, h = rect
     center = (x + w // 2, y + h // 2)
     if name == "network":

@@ -1,2 +1,4 @@
+# Dependencia gráfica para desarrollo local y entornos donde no se usa APT.
 pygame-ce>=2.5.3,<3
+# Lectura segura de manifiestos YAML y configuración.
 PyYAML>=6.0.2,<7

@@ -14,9 +14,7 @@ class Plugin:
     description: str
     icon: str
     path: Path
-    entry_point: Path
-    timeout_seconds: int
-    enabled: bool
+    screen_path: Path
 
     def menu_item(self) -> MenuItem:
         """Create a reusable menu label/icon pair for this plugin."""
@@ -31,15 +29,14 @@ class PluginCatalog:
         self._load(modules_dir, logger)
 
     def _load(self, modules_dir: Path, logger) -> None:
-        """Load valid enabled modules and report invalid manifests."""
+        """Load valid modules and report invalid manifests."""
         if not modules_dir.exists():
             self.errors.append(f"No existe la carpeta de módulos: {modules_dir}")
             return
         for manifest_path in sorted(modules_dir.glob("*/manifest.yaml")):
             try:
                 plugin = self._read_manifest(manifest_path)
-                if plugin.enabled:
-                    self.plugins.append(plugin)
+                self.plugins.append(plugin)
             except (OSError, yaml.YAMLError, ValueError, TypeError) as error:
                 message = f"{manifest_path.parent.name}: {error}"
                 self.errors.append(message)
@@ -50,7 +47,7 @@ class PluginCatalog:
 
     @staticmethod
     def _read_manifest(path: Path) -> Plugin:
-        """Parse and validate one module manifest and its entry-point path."""
+        """Parse and validate one module manifest and its in-module screen path."""
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         if not isinstance(data, dict):
             raise ValueError("el manifiesto debe ser un objeto YAML")
@@ -58,23 +55,28 @@ class PluginCatalog:
         name = data.get("name")
         description = data.get("description")
         icon = data.get("icon")
-        entry = data.get("entry_point", "main.py")
-        timeout = data.get("timeout_seconds", 30)
-        enabled = data.get("enabled", True)
-        if not all(isinstance(value, str) and value.strip() for value in (identifier, name, description, icon, entry)):
-            raise ValueError("faltan id, name, description, icon o entry_point")
-        if not re.fullmatch(r"[a-z][a-z0-9_]*", identifier) or entry != "main.py":
-            raise ValueError("id o entry_point inválido")
-        if icon not in {"network", "system", "folder", "code", "chart", "terminal"}:
+        screen = data.get("screen")
+        if not all(
+            isinstance(value, str) and value.strip()
+            for value in (identifier, name, description, icon, screen)
+        ):
+            raise ValueError("faltan id, name, description, icon o screen")
+        if not re.fullmatch(r"[a-z][a-z0-9_]*", identifier) or screen != "screen.py":
+            raise ValueError("id o screen inválido")
+        if icon not in {
+            "activity", "battery-charging", "bell", "chart",
+            "chart-no-axes-combined", "code", "code-xml", "cpu",
+            "crosshair", "database", "download", "eye", "folder",
+            "gauge", "hard-drive", "lock", "map-pin", "memory-stick",
+            "network", "play", "power", "radar", "radio", "rotate-cw",
+            "scan-line", "search", "server", "settings", "shield-check",
+            "system", "terminal", "upload", "wifi",
+        }:
             raise ValueError(f"icono no admitido: {icon}")
-        if not isinstance(timeout, int) or isinstance(timeout, bool) or not 1 <= timeout <= 3600:
-            raise ValueError("timeout_seconds debe estar entre 1 y 3600")
-        if not isinstance(enabled, bool):
-            raise ValueError("enabled debe ser verdadero o falso")
         module_dir = path.parent.resolve()
         if identifier != module_dir.name:
             raise ValueError("el id debe coincidir con el nombre de la carpeta")
-        entry_path = (module_dir / entry).resolve()
-        if entry_path.parent != module_dir or not entry_path.is_file():
-            raise ValueError("entry_point debe ser main.py dentro del módulo")
-        return Plugin(identifier, name, description, icon, module_dir, entry_path, timeout, enabled)
+        screen_path = (module_dir / screen).resolve()
+        if screen_path.parent != module_dir or not screen_path.is_file():
+            raise ValueError("screen debe ser screen.py dentro del módulo")
+        return Plugin(identifier, name, description, icon, module_dir, screen_path)

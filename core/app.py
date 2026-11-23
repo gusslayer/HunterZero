@@ -19,8 +19,9 @@ from core.ui import icons
 from core.ui.footer import draw_footer
 from core.ui.hud import draw_hud
 from core.ui.layout import MenuLayout
-from core.ui.nmap_screen import NmapScreen
-from core.ui.ping_screen import PingScreen
+from modules.nmap.screen import NmapScreen
+from modules.ping.screen import PingScreen
+from modules.system_monitor.screen import SystemMonitorScreen
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -33,8 +34,21 @@ class HunterZeroApp:
         """Load validated configuration and initialize application controllers."""
         self.logger = configure_logging(ROOT)
         self.settings = AppSettings.load(ROOT / "config" / "settings.json")
+        self.screen_types = {
+            "ping": PingScreen,
+            "nmap": NmapScreen,
+            "system_monitor": SystemMonitorScreen,
+        }
         self.catalog = PluginCatalog(ROOT / "modules", self.logger)
-        self.menu = MenuController(self.catalog.plugins)
+        registered_plugins = []
+        for plugin in self.catalog.plugins:
+            if plugin.identifier in self.screen_types:
+                registered_plugins.append(plugin)
+            else:
+                message = f"{plugin.identifier}: pantalla no registrada en core/app.py"
+                self.catalog.errors.append(message)
+                self.logger.error("Módulo omitido (%s)", message)
+        self.menu = MenuController(registered_plugins)
         self.state = UIState(ROOT / "state" / "ui_state.json")
         self.state.load(len(self.menu.plugins))
         self.menu.selected = self.state.selected
@@ -44,7 +58,7 @@ class HunterZeroApp:
         self.last_stats = 0.0
         self.last_heartbeat = 0.0
         self.running = True
-        self.tool_screen: PingScreen | NmapScreen | None = None
+        self.tool_screen: PingScreen | NmapScreen | SystemMonitorScreen | None = None
         self.joysticks = []
         self.surface: pygame.Surface
         self.title_font: pygame.font.Font
@@ -101,12 +115,19 @@ class HunterZeroApp:
                 self._open_selected_plugin()
 
     def _open_selected_plugin(self) -> None:
-        """Open selected module details without running a command implicitly."""
+        """Create the registered module screen without running a command implicitly."""
         plugin = self.menu.open()
-        if plugin and plugin.identifier == "ping":
-            self.tool_screen = PingScreen()
-        elif plugin and plugin.identifier == "nmap":
-            self.tool_screen = NmapScreen()
+        if plugin is None:
+            return
+        screen_type = self.screen_types.get(plugin.identifier)
+        if screen_type is None:
+            self.logger.error(
+                "El módulo %s no tiene una pantalla registrada en core/app.py.",
+                plugin.identifier,
+            )
+            self.menu.back()
+            return
+        self.tool_screen = screen_type()
 
     def _handle_plugin_action(self, action) -> None:
         """Route actions to the active tool or return to the module list."""
@@ -153,9 +174,16 @@ class HunterZeroApp:
                 self.body_font,
                 self.small_font,
                 self.processes,
+                self.stats,
             )
         elif self.menu.active_plugin:
-            self._draw_details()
+            self._draw_text(
+                "ERROR: PANTALLA DEL MODULO NO DISPONIBLE",
+                30,
+                190,
+                self.small_font,
+                theme.AMBER,
+            )
         else:
             self._draw_menu()
         hints = self.tool_screen.footer_hints() if self.tool_screen else None
@@ -180,53 +208,9 @@ class HunterZeroApp:
         if self.processes.message:
             self._draw_text(self.processes.message, 30, 395, self.small_font, theme.AMBER)
 
-    def _draw_details(self) -> None:
-        """Explain whether a selected module is implemented and how to continue."""
-        plugin = self.menu.active_plugin
-        if plugin is None:
-            return
-        self._draw_text(plugin.name, 38, 90, self.title_font, theme.ORANGE)
-        if plugin.identifier == "system_monitor":
-            details = (
-                f"CPU: {self.stats.cpu_percent}%  RAM: {self.stats.memory_percent}%",
-                f"Temperatura: {self.stats.temperature_c if self.stats.temperature_c is not None else '--'} C",
-                f"Wi-Fi: {'conectado' if self.stats.wifi_connected else 'desconectado'}",
-                f"Batería: {self.stats.battery_percent if self.stats.battery_percent is not None else '--'}%",
-            )
-            for index, detail in enumerate(details):
-                self._draw_text(detail, 38, 150 + index * 42, self.small_font, theme.WHITE)
-        else:
-            self._draw_wrapped_text(plugin.description, 38, 150, 560, self.small_font, theme.WHITE)
-            self._draw_text("Esta función aún no está implementada.", 38, 275, self.small_font, theme.AMBER)
-        self._draw_text("B: volver", 38, 345, self.small_font, theme.ORANGE)
-
     def _draw_text(self, text: str, x: int, y: int, font: pygame.font.Font, color) -> None:
         """Draw one string at an exact pixel coordinate."""
         self.surface.blit(font.render(text, True, color), (x, y))
-
-    def _draw_wrapped_text(
-        self,
-        text: str,
-        x: int,
-        y: int,
-        max_width: int,
-        font: pygame.font.Font,
-        color,
-    ) -> None:
-        """Wrap module descriptions to the available display width."""
-        lines = []
-        current = ""
-        for word in text.split():
-            candidate = f"{current} {word}".strip()
-            if current and font.size(candidate)[0] > max_width:
-                lines.append(current)
-                current = word
-            else:
-                current = candidate
-        if current:
-            lines.append(current)
-        for line_index, line in enumerate(lines):
-            self._draw_text(line, x, y + line_index * (font.get_linesize() + 4), font, color)
 
 
 def run() -> None:

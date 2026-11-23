@@ -10,19 +10,17 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class PluginCatalogTests(unittest.TestCase):
-    """Verify module discovery, disabled entries, and manifest errors."""
+    """Verify implemented-module discovery and manifest validation."""
 
-    def test_loads_all_first_party_modules(self):
-        """Load only the three enabled first-party modules."""
+    def test_loads_only_modules_with_implemented_screens(self):
+        """Discover the three real modules and reject former placeholders."""
         catalog = PluginCatalog(ROOT / "modules", logging.getLogger("test.plugins"))
 
         self.assertEqual(len(catalog.plugins), 3)
         self.assertEqual(catalog.errors, [])
         identifiers = {plugin.identifier for plugin in catalog.plugins}
-        self.assertIn("ping", identifiers)
-        self.assertIn("nmap", identifiers)
-        self.assertNotIn("network_tools", identifiers)
-        self.assertNotIn("terminal", identifiers)
+        self.assertEqual(identifiers, {"ping", "nmap", "system_monitor"})
+        self.assertTrue(all(plugin.screen_path.is_file() for plugin in catalog.plugins))
 
     def test_skips_invalid_manifest_and_reports_error(self):
         """Skip an invalid module and retain an actionable catalog error."""
@@ -35,6 +33,25 @@ class PluginCatalogTests(unittest.TestCase):
         self.assertEqual(catalog.plugins, [])
         self.assertEqual(len(catalog.errors), 1)
         self.assertIn("broken_module", catalog.errors[0])
+
+    def test_skips_a_module_without_its_screen_file(self):
+        """Do not list modules that have a manifest but no implemented screen."""
+        with tempfile.TemporaryDirectory() as temporary:
+            module_dir = Path(temporary) / "empty_module"
+            module_dir.mkdir()
+            (module_dir / "manifest.yaml").write_text(
+                "id: empty_module\n"
+                "name: Empty\n"
+                "description: No screen\n"
+                "icon: system\n"
+                "screen: screen.py\n",
+                encoding="utf-8",
+            )
+            catalog = PluginCatalog(Path(temporary), logging.getLogger("test.plugins"))
+
+        self.assertEqual(catalog.plugins, [])
+        self.assertEqual(len(catalog.errors), 1)
+        self.assertIn("screen.py", catalog.errors[0])
 
 
 if __name__ == "__main__":

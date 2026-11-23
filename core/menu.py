@@ -3,7 +3,7 @@ from core.plugins import Plugin
 
 class MenuController:
     def __init__(self, plugins: list[Plugin]) -> None:
-        """Create a menu controller for the enabled plugin list."""
+        """Create a menu controller for the registered module list."""
         self.plugins = plugins
         self.selected = 0
         self.active_plugin: Plugin | None = None
