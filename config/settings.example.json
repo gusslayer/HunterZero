@@ -1,0 +1,5 @@
+{
+  "stats_interval_seconds": 2,
+  "heartbeat_interval_seconds": 5,
+  "module_heartbeat_timeout_seconds": 15
+}

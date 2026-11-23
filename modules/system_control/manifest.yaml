@@ -1,0 +1,7 @@
+id: system_control
+name: Control del Sistema
+description: Vista base para consultar el sistema; no modifica servicios ni permisos.
+icon: system
+version: "0.1.0"
+entry_point: main.py
+timeout_seconds: 30

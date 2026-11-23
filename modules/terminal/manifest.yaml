@@ -1,0 +1,7 @@
+id: terminal
+name: Terminal
+description: Acceso informativo a la terminal; no ejecuta comandos arbitrarios desde la GUI.
+icon: terminal
+version: "0.1.0"
+entry_point: main.py
+timeout_seconds: 30

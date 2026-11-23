@@ -1,0 +1,7 @@
+id: custom_scripts
+name: Scripts Personalizados
+description: Plantilla para incorporar scripts revisados y autorizados por el usuario.
+icon: code
+version: "0.1.0"
+entry_point: main.py
+timeout_seconds: 30

@@ -1,0 +1,7 @@
+id: file_manager
+name: Gestor de Archivos
+description: Plantilla para gestionar archivos dentro de las carpetas de datos de la app.
+icon: folder
+version: "0.1.0"
+entry_point: main.py
+timeout_seconds: 30

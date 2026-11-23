@@ -1,0 +1,1 @@
+"""HunterZero application core."""

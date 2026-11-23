@@ -1,0 +1,23 @@
+[Unit]
+Description=HunterZero GPi interface
+After=systemd-user-sessions.service
+Conflicts=getty@tty1.service
+
+[Service]
+Type=simple
+User=@APP_USER@
+SupplementaryGroups=input video
+WorkingDirectory=@APP_DIR@
+Environment=SDL_VIDEODRIVER=kmsdrm
+Environment=HUNTERZERO_FULLSCREEN=1
+ExecStart=@APP_DIR@/.venv/bin/python @APP_DIR@/main.py
+Restart=on-failure
+RestartSec=3
+TTYPath=/dev/tty1
+StandardInput=tty
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+
+[Install]
+WantedBy=multi-user.target

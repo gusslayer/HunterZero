@@ -1,0 +1,7 @@
+id: system_monitor
+name: Monitor del Sistema
+description: Métricas locales de uso; el HUD consulta CPU, memoria, temperatura y batería.
+icon: chart
+version: "0.1.0"
+entry_point: main.py
+timeout_seconds: 30
