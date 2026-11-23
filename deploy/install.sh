@@ -19,7 +19,8 @@ fi
 
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    git python3 python3-venv python3-pygame python3-yaml
+    git python3 python3-venv python3-pygame python3-yaml \
+    iputils-ping nmap
 
 python3 -m venv --system-site-packages "$APP_DIR/.venv"
 usermod -aG input,video "$APP_USER"

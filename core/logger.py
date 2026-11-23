@@ -4,6 +4,7 @@ from pathlib import Path
 
 
 def configure_logging(root: Path) -> logging.Logger:
+    """Create the rotating file and console handlers used by the app."""
     log_dir = root / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     logger = logging.getLogger("hunterzero")

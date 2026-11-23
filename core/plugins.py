@@ -16,25 +16,30 @@ class Plugin:
     path: Path
     entry_point: Path
     timeout_seconds: int
+    enabled: bool
 
     def menu_item(self) -> MenuItem:
+        """Create a reusable menu label/icon pair for this plugin."""
         return MenuItem(self.name, self.icon)
 
 
 class PluginCatalog:
     def __init__(self, modules_dir: Path, logger) -> None:
+        """Discover module manifests and retain validation errors for logging."""
         self.plugins: list[Plugin] = []
         self.errors: list[str] = []
         self._load(modules_dir, logger)
 
     def _load(self, modules_dir: Path, logger) -> None:
+        """Load valid enabled modules and report invalid manifests."""
         if not modules_dir.exists():
             self.errors.append(f"No existe la carpeta de módulos: {modules_dir}")
             return
         for manifest_path in sorted(modules_dir.glob("*/manifest.yaml")):
             try:
                 plugin = self._read_manifest(manifest_path)
-                self.plugins.append(plugin)
+                if plugin.enabled:
+                    self.plugins.append(plugin)
             except (OSError, yaml.YAMLError, ValueError, TypeError) as error:
                 message = f"{manifest_path.parent.name}: {error}"
                 self.errors.append(message)
@@ -45,6 +50,7 @@ class PluginCatalog:
 
     @staticmethod
     def _read_manifest(path: Path) -> Plugin:
+        """Parse and validate one module manifest and its entry-point path."""
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         if not isinstance(data, dict):
             raise ValueError("el manifiesto debe ser un objeto YAML")
@@ -54,6 +60,7 @@ class PluginCatalog:
         icon = data.get("icon")
         entry = data.get("entry_point", "main.py")
         timeout = data.get("timeout_seconds", 30)
+        enabled = data.get("enabled", True)
         if not all(isinstance(value, str) and value.strip() for value in (identifier, name, description, icon, entry)):
             raise ValueError("faltan id, name, description, icon o entry_point")
         if not re.fullmatch(r"[a-z][a-z0-9_]*", identifier) or entry != "main.py":
@@ -62,10 +69,12 @@ class PluginCatalog:
             raise ValueError(f"icono no admitido: {icon}")
         if not isinstance(timeout, int) or isinstance(timeout, bool) or not 1 <= timeout <= 3600:
             raise ValueError("timeout_seconds debe estar entre 1 y 3600")
+        if not isinstance(enabled, bool):
+            raise ValueError("enabled debe ser verdadero o falso")
         module_dir = path.parent.resolve()
         if identifier != module_dir.name:
             raise ValueError("el id debe coincidir con el nombre de la carpeta")
         entry_path = (module_dir / entry).resolve()
         if entry_path.parent != module_dir or not entry_path.is_file():
             raise ValueError("entry_point debe ser main.py dentro del módulo")
-        return Plugin(identifier, name, description, icon, module_dir, entry_path, timeout)
+        return Plugin(identifier, name, description, icon, module_dir, entry_path, timeout, enabled)

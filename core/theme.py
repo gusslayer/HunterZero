@@ -17,6 +17,7 @@ PANEL = (18, 15, 11)
 
 
 def load_font(size: int) -> pygame.font.Font:
+    """Load the bundled, freely licensed Press Start 2P font."""
     font_path = ROOT / "assets" / "fonts" / "PressStart2P-Regular.ttf"
     if not font_path.is_file():
         raise FileNotFoundError(f"Falta la fuente requerida: {font_path}")

@@ -2,6 +2,7 @@ import pygame
 
 
 def draw_icon(surface: pygame.Surface, name: str, rect: pygame.Rect, color: tuple[int, int, int]) -> None:
+    """Draw a small vector icon for a menu item using Pygame primitives."""
     x, y, w, h = rect
     center = (x + w // 2, y + h // 2)
     if name == "network":

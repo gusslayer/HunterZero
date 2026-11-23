@@ -7,7 +7,10 @@ from core.state import UIState
 
 
 class UIStateTests(unittest.TestCase):
+    """Verify atomic UI-state persistence and validation."""
+
     def test_saves_and_clamps_selected_item(self):
+        """Persist the menu index and clamp it to the available entries."""
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "ui_state.json"
             state = UIState(path)
@@ -20,6 +23,7 @@ class UIStateTests(unittest.TestCase):
         self.assertEqual(restored.selected, 3)
 
     def test_invalid_state_is_reported(self):
+        """Raise an explicit error when the persisted menu index is invalid."""
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "ui_state.json"
             path.write_text(json.dumps({"selected": "invalid"}), encoding="utf-8")

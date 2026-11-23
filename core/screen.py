@@ -6,6 +6,7 @@ from core import theme
 
 
 def create_display() -> pygame.Surface:
+    """Create the 640x480 SDL display, falling back only when no driver was forced."""
     driver = os.environ.get("SDL_VIDEODRIVER")
     flags = pygame.FULLSCREEN if os.environ.get("HUNTERZERO_FULLSCREEN") == "1" else 0
     try:

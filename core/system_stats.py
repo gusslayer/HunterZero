@@ -17,9 +17,11 @@ class SystemStats:
 
 class StatsReader:
     def __init__(self) -> None:
+        """Initialize CPU counters used to calculate usage between samples."""
         self._previous_cpu: tuple[int, int] | None = None
 
     def read(self) -> SystemStats:
+        """Read the current HUD metrics from procfs and sysfs."""
         return SystemStats(
             cpu_percent=self._cpu_percent(),
             memory_percent=self._memory_percent(),
@@ -31,6 +33,7 @@ class StatsReader:
 
     @staticmethod
     def _wifi_connected() -> bool:
+        """Return whether the wlan0 interface reports an up state."""
         try:
             return Path("/sys/class/net/wlan0/operstate").read_text(
                 encoding="ascii"
@@ -39,6 +42,7 @@ class StatsReader:
             return False
 
     def _cpu_percent(self) -> int:
+        """Calculate CPU utilization since the preceding procfs sample."""
         try:
             values = [int(value) for value in Path("/proc/stat").read_text().splitlines()[0].split()[1:]]
             idle = values[3] + (values[4] if len(values) > 4 else 0)
@@ -53,6 +57,7 @@ class StatsReader:
 
     @staticmethod
     def _memory_percent() -> int:
+        """Calculate RAM usage from MemTotal and MemAvailable."""
         try:
             fields = {}
             for line in Path("/proc/meminfo").read_text().splitlines():
@@ -66,6 +71,7 @@ class StatsReader:
 
     @staticmethod
     def _temperature() -> int | None:
+        """Read the first available thermal sensor in degrees Celsius."""
         candidates = [
             Path("/sys/class/thermal/thermal_zone0/temp"),
             Path("/sys/class/hwmon/hwmon0/temp1_input"),
@@ -79,6 +85,7 @@ class StatsReader:
 
     @staticmethod
     def _battery() -> int | None:
+        """Read the first exposed power-supply charge percentage."""
         for capacity in Path("/sys/class/power_supply").glob("*/capacity"):
             try:
                 return max(0, min(100, int(capacity.read_text().strip())))
@@ -88,6 +95,7 @@ class StatsReader:
 
 
 def heartbeat_payload() -> dict[str, object]:
+    """Create the JSON-compatible health snapshot for the running application."""
     return {
         "application": "hunterzero",
         "pid": os.getpid(),

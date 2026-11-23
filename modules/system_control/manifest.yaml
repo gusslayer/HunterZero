@@ -5,3 +5,4 @@ icon: system
 version: "0.1.0"
 entry_point: main.py
 timeout_seconds: 30
+enabled: false

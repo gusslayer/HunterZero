@@ -1,7 +1,0 @@
-id: network_tools
-name: Herramientas de Red
-description: Plantilla para herramientas de diagnóstico en redes propias o autorizadas.
-icon: network
-version: "0.1.0"
-entry_point: main.py
-timeout_seconds: 30

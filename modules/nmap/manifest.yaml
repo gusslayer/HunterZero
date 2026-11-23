@@ -1,0 +1,7 @@
+id: nmap
+name: Nmap
+description: Escanea puertos TCP comunes de una IPv4 privada autorizada.
+icon: chart
+version: "0.1.0"
+entry_point: main.py
+timeout_seconds: 100

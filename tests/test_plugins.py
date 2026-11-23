@@ -10,14 +10,22 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class PluginCatalogTests(unittest.TestCase):
+    """Verify module discovery, disabled entries, and manifest errors."""
+
     def test_loads_all_first_party_modules(self):
+        """Load only the three enabled first-party modules."""
         catalog = PluginCatalog(ROOT / "modules", logging.getLogger("test.plugins"))
 
-        self.assertEqual(len(catalog.plugins), 6)
+        self.assertEqual(len(catalog.plugins), 3)
         self.assertEqual(catalog.errors, [])
-        self.assertIn("network_tools", {plugin.identifier for plugin in catalog.plugins})
+        identifiers = {plugin.identifier for plugin in catalog.plugins}
+        self.assertIn("ping", identifiers)
+        self.assertIn("nmap", identifiers)
+        self.assertNotIn("network_tools", identifiers)
+        self.assertNotIn("terminal", identifiers)
 
     def test_skips_invalid_manifest_and_reports_error(self):
+        """Skip an invalid module and retain an actionable catalog error."""
         with tempfile.TemporaryDirectory() as temporary:
             module_dir = Path(temporary) / "broken_module"
             module_dir.mkdir()

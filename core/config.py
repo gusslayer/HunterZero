@@ -7,10 +7,10 @@ from pathlib import Path
 class AppSettings:
     stats_interval_seconds: int = 2
     heartbeat_interval_seconds: int = 5
-    module_heartbeat_timeout_seconds: int = 15
 
     @classmethod
     def load(cls, path: Path) -> "AppSettings":
+        """Load validated optional settings or return the documented defaults."""
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
         except FileNotFoundError:
@@ -22,7 +22,6 @@ class AppSettings:
         allowed = {
             "stats_interval_seconds",
             "heartbeat_interval_seconds",
-            "module_heartbeat_timeout_seconds",
         }
         unknown = set(data) - allowed
         if unknown:
@@ -32,8 +31,8 @@ class AppSettings:
             value = data.get(key, getattr(cls(), key))
             if not isinstance(value, int) or isinstance(value, bool):
                 raise RuntimeError(f"{key} debe ser un entero")
-            minimum = 5 if key == "module_heartbeat_timeout_seconds" else 1
-            maximum = 120 if key == "module_heartbeat_timeout_seconds" else 60
+            minimum = 1
+            maximum = 60
             if not minimum <= value <= maximum:
                 raise RuntimeError(f"{key} debe estar entre {minimum} y {maximum}")
             values[key] = value
