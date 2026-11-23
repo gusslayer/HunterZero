@@ -88,7 +88,7 @@ assets/icons/             # PNG originales de los iconos del menú
 config/                   # ejemplo versionado, configuración local ignorada
 state/heartbeats/         # estado runtime; no se sube a Git
 logs/                     # logs de aplicación y comandos
-deploy/                   # instalador, instalador de deps, actualizador y unidad systemd
+deploy/                   # instalador, config.txt de pantalla, deps, actualizador y unidad systemd
 tests/                    # pruebas sin operaciones reales sobre la red
 ```
 
@@ -133,6 +133,11 @@ esos controles y rechazando el comando si `bash` no está disponible.
 - El venv se crea con `--system-site-packages` para reutilizar los bindings de
   Pygame/YAML compilados para ARMv6; no depender de wheels PyPI ARMv6.
 - Usuario estándar agregado a los grupos `input` y `video`.
+- `deploy/install.sh` instala `deploy/config.txt` en `/boot/firmware/config.txt`
+  mediante `deploy/display-config.sh`: timings DPI 640×480, `vc4-kms-v3d` +
+  `vc4-kms-dpi-generic`, apagado por GPIO 26 y audio PWM. Respaldar el original
+  como `config.txt.hunterzero.bak` y reiniciar para aplicarlo. `update.sh` no lo
+  sobrescribe en cada actualización.
 - Probar driver SDL, pantalla y gamepad desde la consola antes de habilitar
   `hunterzero.service` en tty1. El modo KMS/DRM depende de la imagen GPi.
 - `deploy/update.sh` realiza `git pull --ff-only`, instala los paquetes APT

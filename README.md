@@ -38,6 +38,24 @@ El instalador instala de APT todas las dependencias del sistema necesarias para 
 Pi OS Lite limpia: Git, Python y venv, Pygame, PyYAML, SDL, fuentes, utilidades
 de proceso/red, `ping`, `nmap` y soporte de dispositivos. Configura el entorno
 virtual, agrega el usuario actual a `input` y `video` e instala la unidad systemd.
+
+### Pantalla de la GPi Case 2W
+
+`deploy/install.sh` copia `deploy/config.txt` a `/boot/firmware/config.txt`
+(ruta de la partición de arranque en Trixie) con los timings DPI de 640×480, el
+driver KMS, el apagado por GPIO 26 y el audio PWM. El archivo original se guarda
+como `/boot/firmware/config.txt.hunterzero.bak`. Es necesario reiniciar para que
+el cambio surta efecto:
+
+```bash
+sudo reboot
+```
+
+En una Pi ya instalada se puede aplicar solo la configuración de pantalla con
+`sudo bash deploy/display-config.sh`. Para volver al archivo anterior:
+`sudo cp /boot/firmware/config.txt.hunterzero.bak /boot/firmware/config.txt`.
+`deploy/update.sh` no sobrescribe el `config.txt` en cada actualización.
+
 Cierra sesión y vuelve a entrar para que se apliquen los grupos. Comprueba primero
 la interfaz en la consola conectada a la GPi:
 
@@ -101,7 +119,7 @@ assets/icons/          # PNG utilizados por los iconos del menú
 config/               # Ejemplo versionado y configuración local ignorada por Git
 state/                # Estado UI y heartbeats locales
 logs/                 # Registros locales
-deploy/               # Instalación, actualización y servicio systemd
+deploy/               # Instalación, configuración de pantalla, actualización y servicio systemd
 ```
 
 ## Crear un módulo

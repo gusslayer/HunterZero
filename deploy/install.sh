@@ -64,8 +64,17 @@ install -m 0644 "$service_tmp" /etc/systemd/system/hunterzero.service
 rm -f "$service_tmp"
 systemctl daemon-reload
 
+# Configura la pantalla DPI de la GPi Case 2W. En equipos sin /boot/firmware
+# (por ejemplo, una prueba en i386) se omite sin abortar la instalación.
+if [[ -d /boot/firmware ]]; then
+    bash "$APP_DIR/deploy/display-config.sh"
+else
+    echo "Aviso: no existe /boot/firmware; se omite la configuración de pantalla GPi." >&2
+fi
+
 # Instala en APT los paquetes declarados por los módulos de la copia clonada.
 bash "$APP_DIR/deploy/deps.sh"
 
 echo "Instalación lista. Cierra y abre sesión para aplicar los grupos input/video."
+echo "Si se instaló la configuración de pantalla, reinicia la Pi: sudo reboot"
 echo "Prueba la interfaz y luego ejecuta: sudo systemctl enable --now hunterzero.service"
