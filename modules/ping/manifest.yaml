@@ -1,7 +1,7 @@
+# Identificador, pantalla y metadatos registrados por PluginCatalog.
 id: ping
 name: Ping
 description: Envía paquetes ICMP a una IPv4 privada introducida con el D-pad.
 icon: network
 version: "0.1.0"
-entry_point: main.py
-timeout_seconds: 12
+screen: screen.py

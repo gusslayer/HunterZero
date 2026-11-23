@@ -40,8 +40,9 @@ Lee CPU, RAM, temperatura, Wi-Fi y batería cuando los expone procfs/sysfs.
 Las métricas también aparecen en el HUD y se actualizan de forma periódica.
 La disponibilidad de batería/temperatura depende del hardware/kernel.
 
-Otros módulos del menú son marcadores aún no implementados; deben indicar
-claramente este estado y no ejecutar comandos vacíos.
+El Monitor del Sistema es una pantalla implementada en su propia carpeta.
+No se deben crear manifests para módulos sin pantalla funcional; no hay
+marcadores vacíos ni una terminal genérica en el menú.
 
 ## Controles de la GPi
 
@@ -51,7 +52,7 @@ claramente este estado y no ejecutar comandos vacíos.
 | D-pad izquierda/derecha | Cambiar octeto o una opción |
 | A | Abrir, guardar o confirmar |
 | B | Cancelar/volver; desde el menú principal cierra la interfaz |
-| START | Abrir el detalle del módulo seleccionado |
+| START | Abrir el módulo seleccionado |
 
 Pygame SDL GameController normaliza botones/d-pad. Para mandos no mapeados se
 mantiene fallback de joystick: hat/axis y botones físicos estándar A=0, B=1,
@@ -70,16 +71,13 @@ Flujo de Ping/Nmap:
 ```text
 main.py
 core/                     # App, control de entrada, métricas y procesos
-core/ui/                  # HUD, widgets, layouts y pantallas reusables
+core/ui/                  # HUD, widgets, layouts, ayuda y vistas reusables
 modules/
-  ping/                   # manifiesto, builder de ping y pantalla Ping
-  nmap/                   # manifiesto, builder Nmap y pantalla Nmap
-  system_monitor/         # visualización de estadísticas locales
-  system_control/         # pendiente de implementación
-  file_manager/           # pendiente de implementación
-  custom_scripts/         # pendiente de implementación
-  terminal/               # pendiente de implementación; no acepta shell libre
+  ping/                   # manifiesto, builder, validación y pantalla Ping
+  nmap/                   # manifiesto, builder, validación y pantalla Nmap
+  system_monitor/         # pantalla y ayuda de métricas locales
 assets/fonts/             # Press Start 2P y licencia OFL
+assets/icons/             # PNG originales de los iconos del menú
 config/                   # ejemplo versionado, configuración local ignorada
 data/                     # datos runtime; no se suben a Git
 state/heartbeats/         # estado runtime; no se sube a Git
@@ -88,11 +86,13 @@ deploy/                   # instalador, actualizador y unidad systemd
 tests/                    # pruebas sin operaciones reales sobre la red
 ```
 
-Cada `modules/<id>/` contiene `manifest.yaml`, `__init__.py` y `main.py`. El
-`id` del manifiesto debe coincidir con la carpeta. El núcleo descubre los
-manifiestos usando `yaml.safe_load`. Cada herramienta conserva sus propias
-funciones de validación y argumentos; componentes reutilizables de UI, como el
-editor IPv4, se mantienen fuera de los módulos de dominio.
+Cada `modules/<id>/` funcional contiene `manifest.yaml` y `screen.py`; las
+herramientas que ejecutan procesos también definen sus builders y validación en
+su propio módulo. El `id` del manifiesto debe coincidir con la carpeta y su
+pantalla debe existir. El núcleo descubre manifiestos usando `yaml.safe_load`,
+pero la clase de pantalla se registra explícitamente en `core/app.py`; el
+manifiesto no ejecuta código Python. Vistas compartidas como el editor IPv4,
+las opciones parametrizadas y la ayuda permanecen en `core/ui/`.
 
 El lanzador acepta únicamente ejecutables incluidos en su allowlist (`ping`,
 `nmap`), argv construido por funciones tipadas, `shell=False`, entrada estándar
@@ -104,8 +104,9 @@ reglas sudo sin contraseña.
 
 - Los eventos del gamepad se normalizan a acciones UP/DOWN/LEFT/RIGHT/OPEN/BACK
   y START antes de llegar a pantallas.
-- Cada pantalla mantiene su propio estado (ajustes, edición, confirmación,
-  ejecución y resultado).
+- Ping y Nmap mantienen estado propio de ajustes, edición, confirmación,
+  ejecución y resultado usando el layout parametrizado compartido. El Monitor
+  del Sistema tiene pantalla y ayuda propias.
 - Los procesos escriben stdout/stderr a `logs/commands/latest.log`; la pantalla
   enseña un fragmento acotado y un estado explícito.
 - El timeout/cancelación terminan el proceso. Fallos de sistema y validación
@@ -132,7 +133,8 @@ reglas sudo sin contraseña.
 
 - Código: MIT.
 - Press Start 2P: SIL Open Font License, con `assets/fonts/OFL.txt`.
-- Iconos: trazos vectoriales locales dibujados por Pygame.
+- Iconos: librería Lucide distribuida como PNG transparentes en
+  `assets/icons/`, con licencia y atribución originales.
 - Ejecutar `python -m unittest discover -s tests -v`. Las pruebas de comandos
   solo verifican argumentos; no envían ping ni inician Nmap.
 - La validación en pantalla/gamepad físicos debe completarse en la GPi real.

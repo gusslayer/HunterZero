@@ -1,5 +1,6 @@
 """Validate private IPv4 targets and build conservative Nmap commands."""
 
+# Este archivo solo genera argumentos: la ejecución pasa por ProcessManager.
 import ipaddress
 
 

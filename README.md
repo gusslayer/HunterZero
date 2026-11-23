@@ -1,8 +1,13 @@
-# HunterZero
+.__                  __              __________                   
+|  |__  __ __  _____/  |_  __________\____    /___________  ____  
+|  |  \|  |  \/    \   __\/ __ \_  __ \/     // __ \_  __ \/  _ \ 
+|   Y  \  |  /   |  \  | \  ___/|  | \/     /\  ___/|  | \(  <_> )
+|___|  /____/|___|  /__|  \___  >__| /_______ \___  >__|   \____/ 
+     \/           \/          \/             \/   \/              
 
 Interfaz modular para GPi Case 2W y Raspberry Pi Zero W, con Pygame, navegación por gamepad y estética retro. La resolución base es 640x480; los iconos se dibujan localmente y la tipografía Press Start 2P se distribuye bajo SIL Open Font License.
 
-> Ping y Nmap son herramientas y módulos independientes, cada uno con su propia pantalla. El destino se ingresa octeto por octeto con el D-pad. Ping envía 1–4 paquetes; Nmap usa TCP Connect y 20/50/100 puertos comunes. Solo se aceptan IPv4 privadas y cada ejecución solicita confirmación. Otros módulos aún están en desarrollo y no ejecutan comandos.
+> Ping y Nmap son módulos independientes con opciones, validación y comandos propios; comparten únicamente la vista de configuración/ayuda y el editor IPv4. El destino se ingresa octeto por octeto con el D-pad. Ping envía 1–4 paquetes; Nmap usa TCP Connect y 20/50/100 puertos comunes. Solo se aceptan IPv4 privadas y cada ejecución solicita confirmación. El Monitor del Sistema muestra métricas locales. No se incluyen módulos vacíos ni una terminal de comandos.
 
 ## Requisitos
 
@@ -27,7 +32,12 @@ cd ~/HunterZero
 sudo bash deploy/install.sh
 ```
 
-El instalador instala dependencias de Trixie, configura el entorno virtual, agrega el usuario actual a `input` y `video` e instala la unidad systemd. Cierra sesión y vuelve a entrar para que se apliquen los grupos. Comprueba primero la interfaz en la consola conectada a la GPi:
+El instalador instala de APT todas las dependencias del sistema necesarias para una
+Pi OS Lite limpia: Git, Python y venv, Pygame, PyYAML, SDL, fuentes, utilidades
+de proceso/red, `ping`, `nmap` y soporte de dispositivos. Configura el entorno
+virtual, agrega el usuario actual a `input` y `video` e instala la unidad systemd.
+Cierra sesión y vuelve a entrar para que se apliquen los grupos. Comprueba primero
+la interfaz en la consola conectada a la GPi:
 
 ```bash
 SDL_VIDEODRIVER=kmsdrm HUNTERZERO_FULLSCREEN=1 .venv/bin/python main.py
@@ -67,21 +77,22 @@ Comando: `cp config/settings.example.json config/settings.json`.
 | Cambiar octeto u opción | D-pad izquierda/derecha |
 | Abrir, guardar o confirmar | A |
 | Cancelar/volver | B |
-| Abrir detalle seleccionado | START |
+| Abrir módulo seleccionado | START |
 
 El menú muestra CPU, memoria, temperatura, estado de Wi-Fi, batería (si el kernel la expone) y hora. Las métricas se refrescan cada 2 segundos. La aplicación escribe `state/heartbeats/app.json` cada 5 segundos.
 
-En Ping: selecciona **IP DESTINO**, edita sus octetos con el D-pad y pulsa A para guardar; ajusta paquetes y elige **ENVIAR PING**. Revisa la confirmación y pulsa A otra vez para ejecutar o B para cancelar. Nmap tiene una pantalla separada con su propio destino, cantidad de puertos y confirmación. Ambos permiten cancelar el proceso con B y enseñan el resultado dentro de la GUI.
+En Ping: selecciona **IP DESTINO**, edita sus octetos con el D-pad y pulsa A para guardar; ajusta paquetes y elige **ENVIAR PING**. Revisa la confirmación y pulsa A otra vez para ejecutar o B para cancelar. Nmap tiene su propio destino, cantidad de puertos y confirmación. Ambos permiten cancelar el proceso con B y enseñan el resultado dentro de la GUI. La opción **AYUDA** explica los controles y parámetros de cada pantalla.
 
 ## Estructura
 
 ```text
-core/                 # Bucle Pygame, entrada, estado, procesos, métricas y widgets
-core/ui/              # Layout, HUD, footer e iconos vectoriales reutilizables
-modules/ping/          # Ping, editor de destino y límites de paquetes
-modules/nmap/          # Nmap TCP connect y límites de puertos
-modules/<modulo>/     # Plugins independientes
-assets/fonts/         # Press Start 2P y licencia OFL
+core/                  # Bucle Pygame, entrada, estado, procesos, métricas y widgets comunes
+core/ui/               # Layout, HUD, ayuda y pantallas parametrizadas reutilizables
+modules/ping/          # Especificación, validación, comando y pantalla de Ping
+modules/nmap/          # Especificación, validación, comando y pantalla de Nmap
+modules/system_monitor/ # Pantalla independiente de métricas locales
+assets/fonts/          # Press Start 2P y licencia OFL
+assets/icons/          # PNG utilizados por los iconos del menú
 config/               # Ejemplo versionado y configuración local ignorada por Git
 data/                 # Archivos de trabajo locales
 state/                # Estado UI y heartbeats locales
@@ -91,13 +102,15 @@ deploy/               # Instalación, actualización y servicio systemd
 
 ## Crear un módulo
 
-1. Crea `modules/<id>/manifest.yaml` con `id` (igual al nombre de carpeta), `name`, `description`, `icon`, `entry_point` y `timeout_seconds`.
-2. Crea un paquete Python (`__init__.py`) y un `main.py` que exponga el contrato del módulo.
-3. Usa argumentos de proceso, nunca `shell=True`; valida entradas y escribe solo en las carpetas de datos autorizadas.
-4. Emite heartbeat en la ruta recibida por `HUNTERZERO_HEARTBEAT` para procesos largos.
-5. No eleves privilegios desde la app. Cualquier operación privilegiada requiere una decisión de seguridad y un wrapper con lista permitida, independiente del proceso Pygame.
+Consulta [MODULE_FORMAT.md](MODULE_FORMAT.md) para el formato completo y obligatorio.
 
-Los manifiestos se leen con `yaml.safe_load`; los módulos con manifiestos inválidos se registran en `logs/app.log`. Los marcadores aún no implementados están deshabilitados y no aparecen en el menú. El lanzador solo admite `ping` y `nmap`, nunca usa shell, no acepta comandos de texto y termina procesos al vencer el timeout o cancelar desde la GUI. Ambas herramientas solo admiten una IPv4 RFC1918. Ejecutar diagnósticos únicamente sobre equipos propios o autorizados.
+1. Crea `modules/<id>/manifest.yaml` con `id` (igual al nombre de carpeta), `name`, `description`, `icon` y `screen: screen.py`.
+2. Implementa la pantalla, parámetros y ayuda propios en `modules/<id>/screen.py`. Registra la clase en `core/app.py`; no cargues código arbitrario desde el manifiesto.
+3. Si la función necesita un proceso, agrega un builder de argv validado en el módulo y añade el ejecutable a la allowlist de `core/process_manager.py` tras revisar sus límites de seguridad.
+4. Reutiliza las vistas de destino, parámetros y ayuda de `core/ui/` cuando correspondan; una función sin comportamiento real no debe tener manifiesto ni mostrarse en el menú.
+5. No uses `shell=True`, no eleves privilegios ni aceptes comandos de texto desde la pantalla.
+
+Los manifiestos se leen con `yaml.safe_load`; los manifiestos inválidos o sin pantalla se registran en `logs/app.log` y no aparecen en el menú. El lanzador solo admite `ping` y `nmap`, nunca usa shell, no acepta comandos de texto y termina procesos al vencer el timeout o cancelar desde la GUI. Ambas herramientas solo admiten una IPv4 RFC1918. Ejecutar diagnósticos únicamente sobre equipos propios o autorizados.
 
 Todos los métodos nuevos deben incluir docstrings que describan su propósito; las pruebas cubren argumentos, límites y navegación sin lanzar tráfico de red.
 
@@ -119,4 +132,6 @@ Pruebas automatizadas: `python -m unittest discover -s tests -v`.
 
 - Código: MIT (ver `LICENSE`).
 - Press Start 2P: SIL Open Font License 1.1 (ver `assets/fonts/OFL.txt`).
-- Iconos: trazados originales dibujados en Pygame; no requieren recursos gráficos externos.
+- Iconos: [Lucide](https://lucide.dev/) bajo ISC/MIT, distribuidos como PNG
+  transparentes en `assets/icons/`. La licencia original está en
+  `assets/icons/LUCIDE_LICENSE.txt`.
