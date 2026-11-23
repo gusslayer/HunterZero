@@ -1,9 +1,11 @@
-.__                  __              __________                   
-|  |__  __ __  _____/  |_  __________\____    /___________  ____  
-|  |  \|  |  \/    \   __\/ __ \_  __ \/     // __ \_  __ \/  _ \ 
-|   Y  \  |  /   |  \  | \  ___/|  | \/     /\  ___/|  | \(  <_> )
-|___|  /____/|___|  /__|  \___  >__| /_______ \___  >__|   \____/ 
-     \/           \/          \/             \/   \/              
+```text
+  ___ ___               __                __________                    
+ /   |   \ __ __  _____/  |_  ___________ \____    /___________  ____   
+/    ~    \  |  \/    \   __\/ __ \_  __ \  /     // __ \_  __ \/  _ \  
+\    Y    /  |  /   |  \  | \  ___/|  | \/ /     /\  ___/|  | \(  <_> ) 
+ \___|_  /|____/|___|  /__|  \___  >__|   /_______ \___  >__|   \____/  
+       \/            \/          \/               \/   \/               
+```         
 
 Interfaz modular para GPi Case 2W y Raspberry Pi Zero W, con Pygame, navegación por gamepad y estética retro. La resolución base es 640x480; los iconos se dibujan localmente y la tipografía Press Start 2P se distribuye bajo SIL Open Font License.
 
