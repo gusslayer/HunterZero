@@ -7,6 +7,8 @@ import pygame
 from core import theme
 from core.input import BACK, OPEN
 from core.process_manager import ProcessManager
+from core.ui.text_cache import render_cached
+from core.ui.widgets import draw_title, plain_text, wrap_text
 
 
 class UpdateScreen:
@@ -62,34 +64,44 @@ class UpdateScreen:
         """Render the confirmation, running progress, or result view of the update."""
         del stats
         pygame.draw.rect(surface, theme.BG_COLOR, (0, 28, theme.WIDTH, 184))
-        surface.blit(title_font.render(self.title[:18], False, theme.ACCENT_COLOR), (15, 36))
+        draw_title(surface, title_font, self.title, theme.ACCENT_COLOR)
         if self.phase == "confirm":
             lines = (
-                "Descarga el codigo con git pull --ff-only.",
-                "Los pasos con sudo se indican al terminar.",
-                "A: actualizar    B: volver",
+                *wrap_text("Descarga el codigo con git pull --ff-only.", 34),
+                *wrap_text("Los pasos con sudo se indican al terminar.", 34),
+                "A: ACTUALIZAR   B: VOLVER",
             )
             for index, line in enumerate(lines):
-                surface.blit(small_font.render(line[:36], False, theme.TEXT_COLOR), (15, 66 + index * 20))
+                color = theme.ACCENT_COLOR if index == len(lines) - 1 else theme.TEXT_COLOR
+                surface.blit(render_cached(small_font, line, color), (16, 60 + index * 13))
         elif self.phase == "running":
             elapsed = max(0, int(time.monotonic() - self.started_at)) if self.started_at else 0
             dots = "." * (elapsed % 4)
             surface.blit(
-                body_font.render(f"ACTUALIZANDO{dots}", False, theme.TEXT_COLOR), (15, 59)
+                render_cached(body_font, f"ACTUALIZANDO{dots}", theme.TEXT_COLOR), (16, 60)
             )
             surface.blit(
-                small_font.render(f"Esperando git: {elapsed}s (max. 180s)", False, theme.ACCENT_COLOR),
-                (15, 78),
+                render_cached(
+                    small_font, f"Esperando git: {elapsed}s (max. 180s)", theme.ACCENT_COLOR
+                ),
+                (16, 80),
             )
             for index, line in enumerate(processes.output.splitlines()[-3:]):
-                surface.blit(small_font.render(line[:36], False, theme.TEXT_COLOR), (15, 98 + index * 16))
+                surface.blit(
+                    render_cached(small_font, plain_text(line)[:34], theme.TEXT_COLOR),
+                    (16, 100 + index * 16),
+                )
             self._draw_progress(surface)
-            surface.blit(small_font.render("B CANCELA LA DESCARGA.", False, theme.ACCENT_COLOR), (15, 194))
+            surface.blit(
+                render_cached(small_font, "B CANCELA LA DESCARGA.", theme.ACCENT_COLOR), (16, 194)
+            )
         else:
-            lines = (processes.message[:40], *processes.output.splitlines()[-6:])
+            lines = (processes.message, *processes.output.splitlines()[-6:])
             for index, line in enumerate(lines):
                 color = theme.ACCENT_COLOR if index == 0 else theme.TEXT_COLOR
-                surface.blit(small_font.render(line[:36], False, color), (15, 62 + index * 18))
+                surface.blit(
+                    render_cached(small_font, plain_text(line)[:34], color), (16, 62 + index * 18)
+                )
 
     def _draw_progress(self, surface: pygame.Surface) -> None:
         """Draw a hard-edged indeterminate marker because git reports no percentage."""

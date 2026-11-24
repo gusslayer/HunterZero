@@ -3,6 +3,8 @@
 import pygame
 
 from core import theme
+from core.ui.text_cache import render_cached
+from core.ui.widgets import draw_title, plain_text
 
 
 def draw_help_view(
@@ -15,23 +17,22 @@ def draw_help_view(
 ) -> None:
     """Render titled help sections with wrapped text and common button guidance."""
     pygame.draw.rect(surface, theme.BG_COLOR, (0, 28, theme.WIDTH, 184))
-    surface.blit(title_font.render(title[:18], False, theme.ACCENT_COLOR), (14, 36))
-    y = 62
+    draw_title(surface, title_font, title, theme.ACCENT_COLOR)
+    y = 60
     for heading, paragraphs in sections:
         if y >= 175:
             break
-        surface.blit(body_font.render(heading[:30], False, theme.ACCENT_COLOR), (15, y))
+        surface.blit(render_cached(body_font, plain_text(heading)[:30], theme.ACCENT_COLOR), (16, y))
         y += body_font.get_linesize() + 4
         for paragraph in paragraphs:
             for line in _wrap_text(paragraph, small_font, 285):
                 if y >= 178:
                     break
-                surface.blit(small_font.render(line, False, theme.TEXT_COLOR), (15, y))
+                surface.blit(render_cached(small_font, line, theme.TEXT_COLOR), (16, y))
                 y += small_font.get_linesize() + 3
             y += 2
     surface.blit(
-        small_font.render("A: volver    B: salir", False, theme.ACCENT_COLOR),
-        (15, 194),
+        render_cached(small_font, "A: VOLVER   B: SALIR", theme.ACCENT_COLOR), (16, 194)
     )
 
 
@@ -39,7 +40,7 @@ def _wrap_text(text: str, font: pygame.font.Font, max_width: int) -> list[str]:
     """Wrap one help paragraph into lines that fit the GPi content area."""
     lines: list[str] = []
     current = ""
-    for word in text.split():
+    for word in plain_text(text).split():
         candidate = f"{current} {word}".strip()
         if current and font.size(candidate)[0] > max_width:
             lines.append(current)

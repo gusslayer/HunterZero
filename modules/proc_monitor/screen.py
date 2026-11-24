@@ -8,6 +8,8 @@ from core import theme
 from core.input import BACK, OPEN
 from core.process_manager import ProcessManager
 from core.ui.help_view import draw_help_view
+from core.ui.text_cache import render_cached
+from core.ui.widgets import draw_title, plain_text
 from modules.proc_monitor.main import ProcessSampler, ProcessSnapshot
 
 
@@ -52,6 +54,8 @@ class ProcMonitorScreen:
         del processes
         del stats
         pygame.draw.rect(surface, theme.BG_COLOR, (0, 28, theme.WIDTH, 184))
+        if not self.show_help:
+            draw_title(surface, title_font, "PROCESOS")
         if self.show_help:
             draw_help_view(
                 surface,
@@ -73,22 +77,21 @@ class ProcMonitorScreen:
             return
         if self.processes:
             surface.blit(
-                body_font.render("PID %CPU %MEM HRA", False, theme.MUTED_COLOR), (17, 38)
+                render_cached(body_font, "PROC   PID  %CPU %MEM HRA", theme.MUTED_COLOR), (16, 55)
             )
-            y = 50
+            y = 70
             for snap in self.processes:
-                if y + body_font.get_height() >= 212:
+                if y + body_font.get_height() >= 208:
                     break
                 line = (
                     f"{snap.name[:7]:<7} {snap.pid:>5} {snap.cpu_percent:3.0f}% "
                     f"{snap.memory_percent:3.0f}% {snap.elapsed[:4]}"
                 )
-                surface.blit(body_font.render(line, False, theme.TEXT_COLOR), (17, y))
-                y += 14
+                surface.blit(render_cached(body_font, plain_text(line), theme.TEXT_COLOR), (16, y))
+                y += 15
         else:
             surface.blit(
-                body_font.render("SIN PROCESOS DISPONIBLES.", False, theme.TEXT_COLOR),
-                (17, 50),
+                render_cached(body_font, "SIN PROCESOS DISPONIBLES.", theme.TEXT_COLOR), (16, 70)
             )
 
     def footer_hints(self) -> list[tuple[str, int]]:

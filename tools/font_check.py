@@ -1,11 +1,11 @@
-"""Measure the HackerNoon font metrics used by theme.load_font for sizes 8 and 16."""
-import sys
+"""Measure the bundled pixel font metrics used by theme.load_font for sizes 8 and 16."""
 from pathlib import Path
 
 from PIL import ImageFont
 
-for name in ("HackerNoonV2-Regular.ttf", "HackerNoonV1-Regular.ttf"):
-    path = Path(r"C:\Users\david.martinez\AppData\Local\Temp\opencode\hackernoon-font") / name
+ROOT = Path(__file__).resolve().parents[1]
+for name in ("PressStart2P-Regular.ttf",):
+    path = ROOT / "assets" / "fonts" / name
     for size in (8, 16):
         try:
             font = ImageFont.truetype(str(path), size)

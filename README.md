@@ -7,7 +7,7 @@
        \/            \/          \/               \/   \/               
 ```         
 
-Interfaz modular para GPi Case 2W y Raspberry Pi Zero W, con Pygame, navegación por gamepad y estética pixel art de alto contraste. Toda la interfaz se dibuja en un lienzo virtual de 320x240 y se escala 2x con nearest-neighbor a 640x480; usa negro, blanco y naranja, sin suavizado de tipografía. El tipo de letra es HackerNoon V2, bundles en `assets/fonts/HackerNoonV2-Regular.ttf` (fuente original: https://github.com/hackernoon/font). Los iconos provienen del pack pixelarticons de halfmage (https://github.com/halfmage/pixelarticons).
+Interfaz modular para GPi Case 2W y Raspberry Pi Zero W, con Pygame, navegación por gamepad y estética pixel art de alto contraste. Toda la interfaz se dibuja en un lienzo virtual de 320x240 y se escala 2x con nearest-neighbor a 640x480; usa negro, blanco y naranja, sin suavizado de tipografía. El tipo de letra es Press Start 2P, incluido en `assets/fonts/PressStart2P-Regular.ttf` (fuente original: https://fonts.google.com/specimen/Press+Start+2P), porque sus glifos de 8x8 se leen nítidos tras el escalado entero 2x. Los iconos provienen del pack pixelarticons de halfmage (https://github.com/halfmage/pixelarticons).
 
 > Ping y Nmap son módulos independientes con opciones, validación y comandos propios; comparten únicamente la vista de configuración/ayuda y el editor IPv4. El destino se ingresa octeto por octeto con el D-pad. Ping envía 1–4 paquetes; Nmap usa TCP Connect, 20/50/100 puertos comunes y scripts NSE de la categoría vuln. Solo se aceptan IPv4 privadas y cada ejecución solicita confirmación. El Monitor del Sistema muestra métricas locales. No se incluyen módulos vacíos ni una terminal de comandos.
 
@@ -126,7 +126,7 @@ Comando: `cp config/settings.example.json config/settings.json`.
 
 El menú muestra CPU, memoria, temperatura, estado de Wi-Fi, batería (si el kernel la expone) y hora. Las métricas se refrescan cada 5 segundos. La aplicación escribe `state/heartbeats/app.json` cada 5 segundos. El Monitor de Procesos calcula el %CPU entre lecturas sucesivas de `/proc` (no un promedio desde el arranque) y actualiza la lista una vez por segundo. Nmap usa el máximo de 180 s permitido por el lanzador.
 
-La interfaz es de quiosco: no se cierra con B ni con un evento `SDL_QUIT` del cambio de consola/VT; solo termina si systemd detiene el servicio. Los eventos de botones que estaban pulsados durante el arranque se descartan para no entrar en un módulo por accidente. `create_display()` oculta el cursor de SDL justo después de crear la ventana, porque KMSDRM lo dibuja en un plane ajeno al surface de Pygame. La tipografía HackerNoon V2 usa 16 px para títulos y 8 px para texto en el lienzo virtual; el escalado entero 2x produce píxeles nítidos en la pantalla de 640x480.
+La interfaz es de quiosco: no se cierra con B ni con un evento `SDL_QUIT` del cambio de consola/VT; solo termina si systemd detiene el servicio. Los eventos de botones que estaban pulsados durante el arranque se descartan para no entrar en un módulo por accidente. `create_display()` oculta el cursor de SDL justo después de crear la ventana, porque KMSDRM lo dibuja en un plane ajeno al surface de Pygame. La tipografía Press Start 2P usa 16 px para títulos y 8 px para texto en el lienzo virtual; el escalado entero 2x produce píxeles nítidos en la pantalla de 640x480.
 
 En Ping: selecciona **IP DESTINO**, edita sus octetos con el D-pad y pulsa A para guardar; ajusta paquetes y elige **ENVIAR PING**. Revisa la confirmación y pulsa A otra vez para ejecutar o B para cancelar. Nmap tiene su propio destino, cantidad de puertos y confirmación. Ambos permiten cancelar el proceso con B y enseñan el resultado dentro de la GUI. La opción **AYUDA** explica los controles y parámetros de cada pantalla.
 
@@ -178,9 +178,9 @@ Pruebas automatizadas: `python -m unittest discover -s tests -v`.
 ## Licencias
 
 - Código: MIT (ver `LICENSE`).
-- Tipo de letra: HackerNoon V2 (original en https://github.com/hackernoon/font).
-  La fuente se ofrece gratis en el repositorio oficial; conserva la atribución.
-  Press Start 2P sigue disponible en `assets/fonts/` con su licencia OFL.
+- Tipo de letra: Press Start 2P (original en https://fonts.google.com/specimen/Press+Start+2P),
+  con licencia OFL incluida en `assets/fonts/OFL.txt`. HackerNoon V2 sigue
+  disponible en `assets/fonts/` por si se quiere comparar, pero a 8 px no es legible.
 - Iconos: pack [pixelarticons](https://github.com/halfmage/pixelarticons) de
   halfmage (MIT; texto en `assets/icons/PIXELARTICONS_LICENSE.txt`),
   rasterizados como PNG transparentes en `assets/icons/`;

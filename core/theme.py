@@ -14,13 +14,17 @@ BG_COLOR = (0, 0, 0)
 TEXT_COLOR = (255, 255, 255)
 ACCENT_COLOR = (255, 85, 0)
 MUTED_COLOR = (102, 102, 102)
+PANEL_COLOR = (12, 12, 12)
+SELECTED_BG = (58, 20, 0)
+GRID_COLOR = (38, 38, 38)
+
+FONT_PATH = ROOT / "assets" / "fonts" / "PressStart2P-Regular.ttf"
 
 
 def load_font(size: int) -> pygame.font.Font:
-    """Load the bundled HackerNoon V2 font from assets/fonts."""
+    """Load the bundled pixel font, keeping every glyph sharp on the 2x grid."""
     if size <= 0 or size % 8:
         raise ValueError("El tamaño de fuente debe ser un múltiplo positivo de 8.")
-    font_path = ROOT / "assets" / "fonts" / "HackerNoonV2-Regular.ttf"
-    if not font_path.is_file():
-        raise FileNotFoundError(f"Falta la fuente requerida: {font_path}")
-    return pygame.font.Font(str(font_path), size)
+    if not FONT_PATH.is_file():
+        raise FileNotFoundError(f"Falta la fuente requerida: {FONT_PATH}")
+    return pygame.font.Font(str(FONT_PATH), size)

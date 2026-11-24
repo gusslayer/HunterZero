@@ -15,12 +15,12 @@ from core.process_manager import ProcessManager
 from core.screen import create_display
 from core.state import UIState
 from core.system_stats import StatsReader, heartbeat_payload
-from core.ui import icons
 from core.ui.footer import draw_footer
 from core.ui.hud import draw_hud
 from core.ui.layout import MenuLayout
 from core.ui.text_cache import render_cached
 from core.ui.update_screen import UpdateScreen
+from core.ui.widgets import draw_frame, draw_row, plain_text, wrap_text
 from modules.nmap.screen import NmapScreen
 from modules.ping.screen import PingScreen
 from modules.proc_monitor.screen import ProcMonitorScreen
@@ -41,19 +41,6 @@ MENU_FOOTER_HINTS = [
 def _hide_mouse_cursor() -> None:
     """Ocultar el cursor de SDL para que en el framebuffer solo se vea la interfaz."""
     pygame.mouse.set_visible(False)
-
-
-def _draw_right_arrow(surface: pygame.Surface, rect: pygame.Rect, color) -> None:
-    """Draw a filled triangular arrow pointing right inside the given rect."""
-    pygame.draw.polygon(
-        surface,
-        color,
-        [
-            (rect.x, rect.y),
-            (rect.right, rect.centery),
-            (rect.x, rect.bottom),
-        ],
-    )
 
 
 class HunterZeroApp:
@@ -255,31 +242,59 @@ class HunterZeroApp:
         draw_footer(self.virtual_screen, self.small_font, hints)
 
     def _draw_menu(self) -> None:
-        """Render the visible slice of module folders within the menu bounds."""
-        layout = MenuLayout(pygame.Rect(14, 35, 292, 170), 24, 2)
+        """Render the branded header, the module list, and the selected module's details."""
+        pygame.draw.rect(self.virtual_screen, theme.PANEL_COLOR, (0, 27, theme.WIDTH, 21))
+        pygame.draw.line(self.virtual_screen, theme.MUTED_COLOR, (10, 47), (310, 47), 1)
+        title = render_cached(self.title_font, "HUNTERZERO", theme.TEXT_COLOR)
+        self.virtual_screen.blit(title, (12, 31))
+        pygame.draw.rect(
+            self.virtual_screen, theme.ACCENT_COLOR, (12 + title.get_width() + 7, 34, 4, 10)
+        )
+        selected_plugin = self.menu.plugins[self.menu.selected] if self.menu.plugins else None
+        counter = f"{self.menu.selected + 1:02d}/{len(self.menu.plugins):02d}"
+        tag = render_cached(self.small_font, f"MOD {counter}", theme.ACCENT_COLOR)
+        self.virtual_screen.blit(tag, (theme.WIDTH - 12 - tag.get_width(), 39))
+
+        draw_frame(
+            self.virtual_screen, pygame.Rect(10, 50, 300, 116), theme.GRID_COLOR, theme.BG_COLOR
+        )
+        layout = MenuLayout(pygame.Rect(13, 52, 294, 112), 17, 2)
         first, last = layout.visible_range(len(self.menu.plugins), self.menu.selected)
         for index in range(first, last):
             plugin = self.menu.plugins[index]
             row = layout.row_rect(index)
             if row.bottom > layout.bounds.bottom:
                 break
-            selected = index == self.menu.selected
-            background = theme.ACCENT_COLOR if selected else theme.BG_COLOR
-            foreground = theme.BG_COLOR if selected else theme.TEXT_COLOR
-            pygame.draw.rect(self.virtual_screen, background, row)
-            icons.draw_icon(
+            draw_row(
                 self.virtual_screen,
+                row,
+                plugin.name,
+                "",
+                index == self.menu.selected,
+                self.body_font,
                 plugin.icon,
-                pygame.Rect(row.x + 7, row.y + 3, 17, 17),
-                foreground,
             )
-            label = render_cached(self.body_font, plugin.name, foreground)
-            self.virtual_screen.blit(label, (row.x + 38, row.y + 8))
-            _draw_right_arrow(self.virtual_screen, pygame.Rect(row.right - 13, row.y + 3, 9, 18), foreground)
+
+        draw_frame(
+            self.virtual_screen, pygame.Rect(10, 169, 300, 41), theme.GRID_COLOR, theme.PANEL_COLOR
+        )
+        if selected_plugin:
+            description = wrap_text(selected_plugin.description, 34)
+            visible_lines = description[:2]
+            if len(description) > 2 and visible_lines:
+                visible_lines[-1] = f"{visible_lines[-1]}.."
+            for line_index, line in enumerate(visible_lines):
+                color = theme.ACCENT_COLOR if line_index == 0 else theme.TEXT_COLOR
+                self._draw_text(line, 16, 172 + line_index * 10, self.small_font, color)
+        pygame.draw.line(self.virtual_screen, theme.GRID_COLOR, (15, 191), (305, 191), 1)
         if self.catalog.errors:
-            self._draw_text("AVISO: revisa logs/app.log", 15, 196, self.small_font, theme.ACCENT_COLOR)
-        if self.processes.message:
-            self._draw_text(self.processes.message[:38], 15, 184, self.small_font, theme.ACCENT_COLOR)
+            status, color = "AVISO: REVISA LOGS/APP.LOG", theme.ACCENT_COLOR
+        elif self.processes.message:
+            status, color = self.processes.message[:34], theme.ACCENT_COLOR
+        else:
+            wifi = "ON" if self.stats.wifi_connected else "OFF"
+            status, color = f"IP {self.stats.local_ip}  WIFI {wifi}", theme.MUTED_COLOR
+        self._draw_text(plain_text(status)[:34], 16, 196, self.small_font, color)
 
     def _draw_text(self, text: str, x: int, y: int, font: pygame.font.Font, color) -> None:
         """Draw one string at an exact pixel coordinate."""
