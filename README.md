@@ -15,7 +15,7 @@ Interfaz modular para GPi Case 2W y Raspberry Pi Zero W, con Pygame, navegación
 
 - Raspberry Pi Zero W (ARMv6) con Raspberry Pi OS Lite Trixie de 32 bits.
 - Python 3.13 de Trixie (compatible con Python 3.11 o posterior).
-- Paquetes del sistema: `python3-pygame`, `python3-yaml`, `python3-venv`, `iputils-ping`, `nmap` y `git`.
+- Paquetes del sistema: `python3-pygame`, `python3-yaml`, `python3-venv`, `iputils-ping`, `nmap`, `git` y `libegl-dev` (sin este último, `pygame` falla con `EGL not initialized` en Pi OS Lite).
 - GPi conectado como pantalla HDMI y gamepad detectable por SDL/pygame.
 - Para ejecutar la unidad systemd: usuario local sin privilegios, incluido en los grupos `input` y `video`.
 
@@ -115,7 +115,7 @@ Comando: `cp config/settings.example.json config/settings.json`.
 | Navegar | D-pad arriba/abajo |
 | Cambiar octeto u opción | D-pad izquierda/derecha |
 | Abrir, guardar o confirmar | A |
-| Cancelar/volver | B |
+| Cancelar/volver (en el menú principal no cierra la app) | B |
 | Abrir módulo seleccionado | START |
 
 El menú muestra CPU, memoria, temperatura, estado de Wi-Fi, batería (si el kernel la expone) y hora. Las métricas se refrescan cada 2 segundos. La aplicación escribe `state/heartbeats/app.json` cada 5 segundos.

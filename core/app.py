@@ -28,6 +28,14 @@ from modules.system_monitor.screen import SystemMonitorScreen
 
 ROOT = Path(__file__).resolve().parents[1]
 
+# En el menú principal B no cierra la interfaz: al soltar SDL/KMS el framebuffer
+# queda en blanco y el servicio no se reinicia solo. START/A abren las opciones.
+MENU_FOOTER_HINTS = [
+    ("D-PAD MOVER", 24),
+    ("A ABRIR", 190),
+    ("START DETALLE", 350),
+]
+
 
 class HunterZeroApp:
     """Own the event loop, screen state, and shared diagnostic services."""
@@ -119,8 +127,6 @@ class HunterZeroApp:
                 continue
             if self.menu.active_plugin:
                 self._handle_plugin_action(action)
-            elif action == BACK:
-                self.running = False
             elif action == UP:
                 self.menu.move(-1)
             elif action == DOWN:
@@ -200,7 +206,7 @@ class HunterZeroApp:
             )
         else:
             self._draw_menu()
-        hints = self.tool_screen.footer_hints() if self.tool_screen else None
+        hints = self.tool_screen.footer_hints() if self.tool_screen else MENU_FOOTER_HINTS
         draw_footer(self.surface, self.small_font, hints)
 
     def _draw_menu(self) -> None:

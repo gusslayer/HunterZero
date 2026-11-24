@@ -49,7 +49,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y \
     ca-certificates git sudo udev dbus python3 python3-venv python3-pip \
     python3-pygame python3-yaml \
     libsdl2-2.0-0 libsdl2-ttf-2.0-0 libsdl2-gfx-1.0-0 \
-    libegl1 libegl-mesa0 libgles2 libgbm1 libgl1-mesa-dri libdrm2
+    libegl1 libegl-mesa0 libgles2 libgbm1 libgl1-mesa-dri libdrm2 libegl-dev
 
 # Verifica que el binario instalado tenga punteros de 32 bits.
 if ! python3 -c 'import struct; raise SystemExit(0 if struct.calcsize("P") == 4 else 1)' >/dev/null 2>&1; then

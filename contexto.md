@@ -52,7 +52,7 @@ marcadores vacíos ni una terminal genérica en el menú.
 | D-pad arriba/abajo | Cambiar fila o valor |
 | D-pad izquierda/derecha | Cambiar octeto o una opción |
 | A | Abrir, guardar o confirmar |
-| B | Cancelar/volver; desde el menú principal cierra la interfaz |
+| B | Cancelar/volver; en el menú principal no cierra la interfaz para no dejar el framebuffer en blanco |
 | START | Abrir el módulo seleccionado |
 
 El menú principal lista los módulos; su última fila es **ACTUALIZAR HUNTERZERO**
@@ -130,7 +130,8 @@ esos controles y rechazando el comando si `bash` no está disponible.
 - Pi Zero W, imagen armhf de 32 bits, Python 3.13 de Trixie.
 - Paquetes APT: `python3`, `python3-venv`, `python3-pygame`,
   `python3-yaml`, `iputils-ping`, `nmap`, `git`, y para SDL `kmsdrm`:
-  `libegl1`, `libegl-mesa0`, `libgles2`, `libgbm1`, `libgl1-mesa-dri`, `libdrm2`.
+  `libegl1`, `libegl-mesa0`, `libgles2`, `libgbm1`, `libgl1-mesa-dri`, `libdrm2`
+  y `libegl-dev` (verificado: sin él `pygame` termina con `EGL not initialized`).
   Sin EGL/GBM/Mesa, `pygame.display.set_mode` falla con `EGL not initialized`.
 - El venv se crea con `--system-site-packages` para reutilizar los bindings de
   Pygame/YAML compilados para ARMv6; no depender de wheels PyPI ARMv6.
