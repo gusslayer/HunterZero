@@ -62,7 +62,8 @@ En una Pi ya instalada se puede aplicar solo la configuración de pantalla con
 `deploy/update.sh` no sobrescribe el `config.txt` en cada actualización.
 
 Si `journalctl -u hunterzero.service -b` muestra `pygame.error: EGL not initialized`,
-comprueba lo siguiente antes de habilitar el servicio:
+`core/screen.py` intenta `kmsdrm` y luego `fbcon`, y registra cada fallo en
+`logs/app.log`. Comprueba lo siguiente antes de habilitar el servicio:
 
 ```bash
 ls -l /dev/dri                 # deben aparecer card0 y renderD128

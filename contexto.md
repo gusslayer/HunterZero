@@ -142,6 +142,9 @@ esos controles y rechazando el comando si `bash` no está disponible.
   `vc4-kms-dpi-generic`, apagado por GPIO 26 y audio PWM. Respaldar el original
   como `config.txt.hunterzero.bak` y reiniciar para aplicarlo. `update.sh` no lo
   sobrescribe en cada actualización.
+- `core/screen.py` intenta `kmsdrm` y, si EGL falla, `fbcon` (framebuffer del
+  kernel); solo usa `dummy` cuando no se forzó ningún driver. Cada degradación
+  se registra con un aviso en `logs/app.log`.
 - Probar driver SDL, pantalla y gamepad desde la consola antes de habilitar
   `hunterzero.service` en tty1. El modo KMS/DRM depende de la imagen GPi.
 - `deploy/update.sh` realiza `git pull --ff-only`, instala los paquetes APT
