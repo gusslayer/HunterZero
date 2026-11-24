@@ -36,7 +36,7 @@ fi
 
 apt-get update
 # Paquetes base, Pygame/YAML y herramientas compartidas del sistema. Las
-# dependencias de los módulos (`iputils-ping`, `nmap`) se instalan después con
+# dependencias de los módulos (`iputils-ping`, `nmap`, `dnsutils`) se instalan después con
 # deploy/deps.sh, que lee los campos `deps:` de los manifiestos de modules/*/.
 # Todos deben provenir de APT para conservar compatibilidad armhf/ARMv6.
 # Descartados por no usarse en el código: curl, kbd, procps, iproute2, kmod y

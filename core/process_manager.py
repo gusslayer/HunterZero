@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-ALLOWED_COMMANDS = frozenset({"ping", "nmap"})
+ALLOWED_COMMANDS = frozenset({"ping", "nmap", "nslookup"})
 UPDATE_LABEL = "Actualización de HunterZero"
 UPDATE_DEPENDENCY_HINT = (
     "Si falta una dependencia, instala los paquetes declarados en los manifiestos:"
@@ -42,7 +42,7 @@ class ProcessManager:
         self.output = ""
 
     def start_command(self, label: str, command: list[str], timeout_seconds: int) -> bool:
-        """Start a validated ping or Nmap argv list with captured output."""
+        """Start a validated ping, Nmap, or DNS lookup argv with captured output."""
         if not command or command[0] not in ALLOWED_COMMANDS:
             self.message = "Comando no permitido."
             self.logger.error("Se bloqueó el intento de lanzar un comando no permitido.")
@@ -51,7 +51,7 @@ class ProcessManager:
             label,
             command,
             timeout_seconds,
-            f"No está instalado {command[0]}; instala ping y nmap.",
+            f"No está instalado {command[0]}; instala ping, nmap o dnsutils.",
         )
 
     def start_update(self, timeout_seconds: int = MAX_COMMAND_TIMEOUT_SECONDS) -> bool:

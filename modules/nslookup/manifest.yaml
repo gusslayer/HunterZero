@@ -1,0 +1,8 @@
+id: nslookup
+name: NSLOOKUP
+description: Resuelve un nombre de dominio a su direccion IP con nslookup.
+icon: search
+version: "0.1.0"
+screen: screen.py
+deps:
+  - dnsutils

@@ -13,13 +13,16 @@ class PluginCatalogTests(unittest.TestCase):
     """Verify implemented-module discovery and manifest validation."""
 
     def test_loads_only_modules_with_implemented_screens(self):
-        """Discover the four real modules and reject former placeholders."""
+        """Discover the five real modules and reject former placeholders."""
         catalog = PluginCatalog(ROOT / "modules", logging.getLogger("test.plugins"))
 
-        self.assertEqual(len(catalog.plugins), 4)
+        self.assertEqual(len(catalog.plugins), 5)
         self.assertEqual(catalog.errors, [])
         identifiers = {plugin.identifier for plugin in catalog.plugins}
-        self.assertEqual(identifiers, {"ping", "nmap", "system_monitor", "proc_monitor"})
+        self.assertEqual(
+            identifiers,
+            {"ping", "nmap", "nslookup", "system_monitor", "proc_monitor"},
+        )
         self.assertTrue(all(plugin.screen_path.is_file() for plugin in catalog.plugins))
 
     def test_skips_invalid_manifest_and_reports_error(self):

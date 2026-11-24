@@ -9,13 +9,13 @@
 
 Interfaz modular para GPi Case 2W y Raspberry Pi Zero W, con Pygame, navegación por gamepad y estética pixel art de alto contraste. Toda la interfaz se dibuja en un lienzo virtual de 320x240 y se escala 2x con nearest-neighbor a 640x480; usa negro, blanco y naranja, sin suavizado de tipografía. El tipo de letra es Press Start 2P, incluido en `assets/fonts/PressStart2P-Regular.ttf` (fuente original: https://fonts.google.com/specimen/Press+Start+2P), porque sus glifos de 8x8 se leen nítidos tras el escalado entero 2x. Los iconos provienen del pack pixelarticons de halfmage (https://github.com/halfmage/pixelarticons).
 
-> Ping y Nmap son módulos independientes con opciones, validación y comandos propios; comparten únicamente la vista de configuración/ayuda y el editor IPv4. El destino se ingresa octeto por octeto con el D-pad. Ping envía 1–4 paquetes; Nmap usa TCP Connect, 20/50/100 puertos comunes y scripts NSE de la categoría vuln. Solo se aceptan IPv4 privadas y cada ejecución solicita confirmación. El Monitor del Sistema muestra métricas locales. No se incluyen módulos vacíos ni una terminal de comandos.
+> Ping, Nmap y NSLOOKUP son módulos independientes con opciones, validación y comandos propios. Ping y Nmap comparten la vista de configuración/ayuda y el editor IPv4 (octeto por octeto con el D-pad): Ping envía 1–4 paquetes y Nmap usa TCP Connect, 20/50/100 puertos comunes y scripts NSE de la categoría vuln. NSLOOKUP tiene su propio editor de dominio carácter por carácter y muestra las IP resueltas (A o AAAA). Toda ejecución solicita confirmación. El Monitor del Sistema muestra métricas locales. No se incluyen módulos vacíos ni una terminal de comandos.
 
 ## Requisitos
 
 - Raspberry Pi Zero W (ARMv6) con Raspberry Pi OS Lite Trixie de 32 bits.
 - Python 3.13 de Trixie (compatible con Python 3.11 o posterior).
-- Paquetes del sistema: `python3-pygame`, `python3-yaml`, `python3-venv`, `iputils-ping`, `nmap`, `git` y las bibliotecas de ejecución EGL/GBM/Mesa para KMS/DRM.
+- Paquetes del sistema: `python3-pygame`, `python3-yaml`, `python3-venv`, `iputils-ping`, `nmap`, `dnsutils` (proporciona `nslookup`), `git` y las bibliotecas de ejecución EGL/GBM/Mesa para KMS/DRM.
 - GPi conectado como pantalla HDMI y gamepad detectable por SDL/pygame.
 - Para ejecutar la unidad systemd: usuario local sin privilegios, incluido en los grupos `input` y `video`.
 
@@ -39,7 +39,7 @@ Los scripts de `deploy/` se relanzan automáticamente con `bash` si se invocan c
 
 El instalador instala de APT todas las dependencias del sistema necesarias para una
 Pi OS Lite limpia: Git, Python y venv, Pygame, PyYAML, SDL, fuentes, utilidades
-de proceso/red, `ping`, `nmap` y soporte de dispositivos. También instala EGL,
+de proceso/red, `ping`, `nmap`, `dnsutils` y soporte de dispositivos. También instala EGL,
 GLES, GBM, Mesa y libdrm, necesarios para el driver `kmsdrm` de SDL2. Configura
 el entorno virtual, agrega el usuario actual a `input`, `video` y `render`, e
 instala la unidad systemd (que hereda esos grupos del usuario).
@@ -124,11 +124,11 @@ Comando: `cp config/settings.example.json config/settings.json`.
 | Cancelar/volver (en el menú principal no cierra la app) | B |
 | Abrir módulo; dentro de uno equivale a A | START |
 
-El menú muestra CPU, memoria, temperatura, estado de Wi-Fi, batería (si el kernel la expone) y hora. Las métricas se refrescan cada 5 segundos. La aplicación escribe `state/heartbeats/app.json` cada 5 segundos. El Monitor de Procesos calcula el %CPU entre lecturas sucesivas de `/proc` (no un promedio desde el arranque) y actualiza la lista una vez por segundo. Nmap usa el máximo de 180 s permitido por el lanzador.
+El menú muestra CPU, memoria, temperatura, estado de Wi-Fi, batería (si el kernel la expone) y hora. Las métricas se refrescan cada 5 segundos. La aplicación escribe `state/heartbeats/app.json` cada 5 segundos. El Monitor de Procesos calcula el %CPU entre lecturas sucesivas de `/proc` (no un promedio desde el arranque) y actualiza la lista una vez por segundo. Nmap usa el máximo de 180 s permitido por el lanzador y NSLOOKUP un límite de 20 s.
 
 La interfaz es de quiosco: no se cierra con B ni con un evento `SDL_QUIT` del cambio de consola/VT; solo termina si systemd detiene el servicio. Los eventos de botones que estaban pulsados durante el arranque se descartan para no entrar en un módulo por accidente. `create_display()` oculta el cursor de SDL justo después de crear la ventana, porque KMSDRM lo dibuja en un plane ajeno al surface de Pygame. La tipografía Press Start 2P usa 16 px para títulos y 8 px para texto en el lienzo virtual; el escalado entero 2x produce píxeles nítidos en la pantalla de 640x480.
 
-En Ping: selecciona **IP DESTINO**, edita sus octetos con el D-pad y pulsa A para guardar; ajusta paquetes y elige **ENVIAR PING**. Revisa la confirmación y pulsa A otra vez para ejecutar o B para cancelar. Nmap tiene su propio destino, cantidad de puertos y confirmación. Ambos permiten cancelar el proceso con B y enseñan el resultado dentro de la GUI. La opción **AYUDA** explica los controles y parámetros de cada pantalla.
+En Ping: selecciona **IP DESTINO**, edita sus octetos con el D-pad y pulsa A para guardar; ajusta paquetes y elige **ENVIAR PING**. Revisa la confirmación y pulsa A otra vez para ejecutar o B para cancelar. Nmap tiene su propio destino, cantidad de puertos y confirmación. En **NSLOOKUP** elige **HOST** y usa izquierda/derecha para mover el cursor y arriba/abajo para cambiar cada carácter (el espacio borra la posición); A guarda el dominio, **TIPO REGISTRO** alterna entre A (IPv4) y AAAA (IPv6) y **CONSULTAR DNS** pide confirmación. La pantalla de resultado muestra las IP encontradas y las últimas líneas de la salida. Los tres módulos permiten cancelar con B y enseñan el resultado dentro de la GUI. La opción **AYUDA** explica los controles y parámetros de cada pantalla.
 
 ## Estructura
 
@@ -137,6 +137,7 @@ core/                  # Bucle Pygame, entrada, estado, procesos, métricas y wi
 core/ui/               # Layout, HUD, ayuda y pantallas parametrizadas reutilizables
 modules/ping/          # Especificación, validación, comando y pantalla de Ping
 modules/nmap/          # Especificación, validación, comando y pantalla de Nmap
+modules/nslookup/      # Editor de dominio, argv validado y resultado de DNS
 modules/system_monitor/ # Pantalla independiente de métricas locales
 modules/proc_monitor/   # Lista de procesos activos, estilo top resumido
 assets/fonts/          # HackerNoon V2 de assets/fonts/HackerNoonV2-Regular.ttf
@@ -157,7 +158,7 @@ Consulta [MODULE_FORMAT.md](MODULE_FORMAT.md) para el formato completo y obligat
 4. Reutiliza las vistas de destino, parámetros y ayuda de `core/ui/` cuando correspondan; una función sin comportamiento real no debe tener manifiesto ni mostrarse en el menú.
 5. No uses `shell=True`, no eleves privilegios ni aceptes comandos de texto desde la pantalla.
 
-Los manifiestos se leen con `yaml.safe_load`; los manifiestos inválidos o sin pantalla se registran en `logs/app.log` y no aparecen en el menú. El lanzador solo admite `ping` y `nmap`, nunca usa shell, no acepta comandos de texto y termina procesos al vencer el timeout o cancelar desde la GUI. Ambas herramientas solo admiten una IPv4 RFC1918. Ejecutar diagnósticos únicamente sobre equipos propios o autorizados.
+Los manifiestos se leen con `yaml.safe_load`; los manifiestos inválidos o sin pantalla se registran en `logs/app.log` y no aparecen en el menú. El lanzador solo admite `ping`, `nmap` y `nslookup`, nunca usa shell, no acepta comandos de texto y termina procesos al vencer el timeout o cancelar desde la GUI. Ping y Nmap validan la IPv4 introducida; NSLOOKUP valida el nombre de dominio carácter a carácter y solo pasa al argv un host canónico. Ejecutar diagnósticos únicamente sobre equipos propios o autorizados.
 
 Todos los métodos nuevos deben incluir docstrings que describan su propósito; las pruebas cubren argumentos, límites y navegación sin lanzar tráfico de red.
 

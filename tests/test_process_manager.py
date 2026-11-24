@@ -30,6 +30,26 @@ class ProcessManagerTests(unittest.TestCase):
             ["/usr/bin/ping", "-c", "2"],
         )
 
+    def test_nslookup_is_allowlisted_without_a_shell(self):
+        """Allow the DNS resolver argv while keeping shell execution disabled."""
+        with tempfile.TemporaryDirectory() as temporary:
+            manager = ProcessManager(Path(temporary), logging.getLogger("test.processes"))
+            with patch("core.process_manager.shutil.which", return_value="/usr/bin/nslookup"), patch(
+                "core.process_manager.subprocess.Popen"
+            ) as popen:
+                popen.return_value.pid = 42
+                popen.return_value.poll.return_value = None
+
+                started = manager.start_command(
+                    "NSLOOKUP example.com", ["nslookup", "-type=A", "example.com"], 20
+                )
+
+        self.assertTrue(started)
+        self.assertFalse(popen.call_args.kwargs["shell"])
+        self.assertEqual(
+            popen.call_args.args[0], ["/usr/bin/nslookup", "-type=A", "example.com"]
+        )
+
     def test_arbitrary_commands_and_unbounded_timeout_are_rejected(self):
         """Reject shells, arbitrary executables, and unbounded timeouts."""
         with tempfile.TemporaryDirectory() as temporary:

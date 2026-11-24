@@ -22,6 +22,7 @@ from core.ui.text_cache import render_cached
 from core.ui.update_screen import UpdateScreen
 from core.ui.widgets import draw_frame, draw_row, plain_text, wrap_text
 from modules.nmap.screen import NmapScreen
+from modules.nslookup.screen import NsLookupScreen
 from modules.ping.screen import PingScreen
 from modules.proc_monitor.screen import ProcMonitorScreen
 from modules.system_monitor.screen import SystemMonitorScreen
@@ -53,6 +54,7 @@ class HunterZeroApp:
         self.screen_types = {
             "ping": PingScreen,
             "nmap": NmapScreen,
+            "nslookup": NsLookupScreen,
             "system_monitor": SystemMonitorScreen,
             "proc_monitor": ProcMonitorScreen,
             "update": UpdateScreen,
@@ -88,7 +90,13 @@ class HunterZeroApp:
         self.last_heartbeat = 0.0
         self.running = True
         self.tool_screen: (
-            PingScreen | NmapScreen | SystemMonitorScreen | ProcMonitorScreen | UpdateScreen | None
+            PingScreen
+            | NmapScreen
+            | NsLookupScreen
+            | SystemMonitorScreen
+            | ProcMonitorScreen
+            | UpdateScreen
+            | None
         ) = None
         self.joysticks = []
         self.surface: pygame.Surface
