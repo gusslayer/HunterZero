@@ -13,19 +13,19 @@ def draw_hud(surface: pygame.Surface, font: pygame.font.Font, stats: SystemStats
     """Draw system metrics, hardware symbols, Wi-Fi, battery, and clock."""
     pygame.draw.rect(surface, theme.BLACK, (0, 0, theme.WIDTH, 54))
     pygame.draw.line(surface, theme.ORANGE, (20, 53), (620, 53), 2)
-    _draw_chip(surface, 29, 19, 17)
-    _draw_memory(surface, 175, 20)
-    _draw_thermometer(surface, 354, 18)
-    _draw_battery(surface, 486, 20, stats.battery_percent is not None)
-    _text(surface, font, f"CPU:{stats.cpu_percent:02d}%", 54, 22)
-    _text(surface, font, f"RAM:{stats.memory_percent:02d}%", 201, 22)
+    _draw_chip(surface, 12, 19, 17)
+    _draw_memory(surface, 144, 20)
+    _draw_thermometer(surface, 278, 18)
+    _draw_battery(surface, 436, 20, stats.battery_percent is not None)
+    _text(surface, font, f"CPU:{stats.cpu_percent:02d}%", 36, 22)
+    _text(surface, font, f"RAM:{stats.memory_percent:02d}%", 170, 22)
     temperature = f"{stats.temperature_c}C" if stats.temperature_c is not None else "--C"
-    _text(surface, font, f"TEMP:{temperature}", 377, 22)
-    draw_wifi(surface, 462, 28, stats.wifi_connected)
+    _text(surface, font, f"TEMP:{temperature}", 298, 22)
+    draw_wifi(surface, 412, 28, stats.wifi_connected)
     battery = f"{stats.battery_percent}%" if stats.battery_percent is not None else "--%"
-    _text(surface, font, battery, 512, 22)
-    _text(surface, font, stats.clock, 572, 22)
-    for x in (154, 339, 445, 565):
+    _text(surface, font, battery, 463, 22)
+    _text(surface, font, stats.clock, 522, 22)
+    for x in (138, 272, 398, 430, 516):
         pygame.draw.line(surface, theme.ORANGE, (x, 13), (x, 43), 2)
 
 

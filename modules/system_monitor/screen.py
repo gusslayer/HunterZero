@@ -74,7 +74,7 @@ class SystemMonitorScreen:
             f"HORA: {stats.clock}",
         )
         for index, value in enumerate(values):
-            surface.blit(body_font.render(value, True, theme.WHITE), (34, 128 + index * 36))
+            surface.blit(body_font.render(value, True, theme.WHITE), (34, 128 + index * 32))
         surface.blit(small_font.render("A: ayuda    B: volver", True, theme.AMBER), (34, 365))
 
     def footer_hints(self) -> list[tuple[str, int]]:

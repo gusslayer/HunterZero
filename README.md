@@ -101,7 +101,7 @@ sudo systemctl restart hunterzero.service
 
 También se puede usar `bash deploy/update.sh`, que realiza `git pull --ff-only`, instala en APT los paquetes nuevos declarados por los módulos (`deploy/deps.sh`) y reinicia el servicio. Las preferencias, heartbeats, datos, logs y configuración local quedan fuera de Git.
 
-Desde la interfaz elige **ACTUALIZAR HUNTERZERO** en el menú principal y pulsa A; revisa el progreso en la pantalla de actualización y vuelve con A/B cuando termine.
+Desde la interfaz elige **ACTUALIZAR HUNTERZERO** en el menú principal y pulsa A. La pantalla muestra el tiempo transcurrido, las últimas líneas del log y una barra de progreso; B cancela. Como la app no es root y no hay terminal para pedir la contraseña de `sudo`, este botón **solo descarga el código**: al terminar indica los pasos que faltan. Para completar la actualización, conecta por SSH y ejecuta `sudo bash deploy/update.sh` (instala dependencias y reinicia el servicio).
 
 ## Configuración
 
@@ -119,6 +119,8 @@ Comando: `cp config/settings.example.json config/settings.json`.
 | Abrir módulo seleccionado | START |
 
 El menú muestra CPU, memoria, temperatura, estado de Wi-Fi, batería (si el kernel la expone) y hora. Las métricas se refrescan cada 2 segundos. La aplicación escribe `state/heartbeats/app.json` cada 5 segundos.
+
+La interfaz es de quiosco: no se cierra con B ni con un evento `SDL_QUIT` del cambio de consola/VT; solo termina si systemd detiene el servicio. Los eventos de botones que estaban pulsados durante el arranque se descartan para no entrar en un módulo por accidente. La tipografía usa 20/16/12 px (título/cuerpo/detalle) para que los datos se lean en la pantalla de 640x480; los textos largos se recortan al ancho disponible.
 
 En Ping: selecciona **IP DESTINO**, edita sus octetos con el D-pad y pulsa A para guardar; ajusta paquetes y elige **ENVIAR PING**. Revisa la confirmación y pulsa A otra vez para ejecutar o B para cancelar. Nmap tiene su propio destino, cantidad de puertos y confirmación. Ambos permiten cancelar el proceso con B y enseñan el resultado dentro de la GUI. La opción **AYUDA** explica los controles y parámetros de cada pantalla.
 

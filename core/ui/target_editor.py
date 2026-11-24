@@ -67,8 +67,8 @@ class PrivateIPv4Editor:
             color = theme.AMBER if index == self.selected_octet else theme.ORANGE
             surface.blit(font.render(f"{octet:03d}", True, color), (x, 180))
             if index < 3:
-                surface.blit(font.render(".", True, theme.ORANGE), (x + 42, 180))
-            x += 125
+                surface.blit(font.render(".", True, theme.ORANGE), (x + 50, 180))
+            x += 132
         hint = "A: guardar" if self.is_private else "Solo se acepta IP privada RFC1918"
         surface.blit(small_font.render(hint, True, theme.WHITE), (30, 275))
         surface.blit(

@@ -190,7 +190,7 @@ class ParameterizedToolScreen:
         )
         for index, line in enumerate(lines):
             color = theme.AMBER if index == len(lines) - 1 else theme.WHITE
-            surface.blit(font.render(line[:68], True, color), (30, 132 + index * 48))
+            surface.blit(font.render(line[:46], True, color), (30, 132 + index * 48))
 
     def _draw_result(
         self,
@@ -199,6 +199,6 @@ class ParameterizedToolScreen:
         processes: ProcessManager,
     ) -> None:
         """Show bounded process status and captured output in the result view."""
-        surface.blit(font.render(processes.message[:64], True, theme.AMBER), (30, 120))
+        surface.blit(font.render(processes.message[:46], True, theme.AMBER), (30, 120))
         for index, line in enumerate(processes.output.splitlines()[-7:]):
-            surface.blit(font.render(line[:64], True, theme.WHITE), (30, 164 + index * 30))
+            surface.blit(font.render(line[:46], True, theme.WHITE), (30, 164 + index * 30))

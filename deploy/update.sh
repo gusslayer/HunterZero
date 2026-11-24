@@ -13,6 +13,15 @@ if [ "$(id -u)" -eq 0 ]; then
 fi
 git -C "$APP_DIR" pull --ff-only
 
+# La interfaz se actualiza a sí misma desde el gamepad: sin tty sudo no puede
+# pedir contraseña, y reiniciar el servicio aquí mataría la propia interfaz antes
+# de que pueda mostrar el resultado. En ese modo solo se descarga el código.
+if [[ "${HUNTERZERO_UPDATE_GUI:-0}" == "1" ]]; then
+    echo "Código actualizado. Para completar, ejecuta por SSH:"
+    echo "  cd ~/HunterZero && sudo bash deploy/update.sh"
+    exit 0
+fi
+
 # Instala en APT los paquetes nuevos declarados por los módulos tras el pull.
 sudo bash "$APP_DIR/deploy/deps.sh"
 

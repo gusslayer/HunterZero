@@ -2,6 +2,8 @@
 
 import unittest
 
+import pygame
+
 from core.input import BACK, OPEN
 from core.ui.update_screen import UpdateScreen
 
@@ -51,6 +53,25 @@ class UpdateScreenTests(unittest.TestCase):
         processes = FakeProcessManager()
         self.assertTrue(screen.handle(BACK, processes))
         self.assertFalse(processes.started)
+
+    def test_running_phase_renders_live_output(self):
+        """Draw elapsed time and captured output without leaving the running phase."""
+        screen = UpdateScreen()
+        screen.phase = "running"
+        screen.started_at = 1.0
+        processes = FakeProcessManager()
+        processes.output = "Recibiendo objetos..."
+        pygame.font.init()
+        surface = pygame.Surface((640, 480))
+        screen.draw(
+            surface,
+            pygame.font.Font(None, 16),
+            pygame.font.Font(None, 13),
+            pygame.font.Font(None, 9),
+            processes,
+            None,
+        )
+        self.assertEqual(screen.phase, "running")
 
     def test_b_during_the_update_cancels_the_process(self):
         """B during the running phase cancels the update process."""

@@ -61,6 +61,19 @@ class ProcessManagerTests(unittest.TestCase):
 
         self.assertEqual(manager.message, "Comando no permitido.")
 
+    def test_gui_update_skips_root_steps_via_environment(self):
+        """Mark GUI updates so the script does not call sudo or restart the service."""
+        with tempfile.TemporaryDirectory() as temporary:
+            manager = ProcessManager(Path(temporary), logging.getLogger("test.processes"))
+            with patch("core.process_manager.shutil.which", return_value="/usr/bin/bash"), patch(
+                "core.process_manager.subprocess.Popen"
+            ) as popen:
+                popen.return_value.pid = 42
+                popen.return_value.poll.return_value = None
+                self.assertTrue(manager.start_update())
+
+        self.assertEqual(popen.call_args.kwargs["env"]["HUNTERZERO_UPDATE_GUI"], "1")
+
     def test_update_failure_mentions_installing_declared_dependencies(self):
         """Show the dependency-install hint when the update command fails."""
         with tempfile.TemporaryDirectory() as temporary:

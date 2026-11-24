@@ -67,10 +67,10 @@ class ProcMonitorScreen:
         if self.processes:
             for index, snap in enumerate(self.processes):
                 line = (
-                    f"{snap.name} {snap.pid:>6}  CPU {snap.cpu_percent:5.1f}%  "
-                    f"MEM {snap.memory_percent:5.1f}%  {snap.elapsed}"
+                    f"{snap.name[:11]:<11} {snap.pid:>5} {snap.cpu_percent:4.0f}% "
+                    f"{snap.memory_percent:4.0f}% {snap.elapsed[:6]}"
                 )
-                surface.blit(body_font.render(line[:68], True, theme.WHITE), (34, 128 + index * 36))
+                surface.blit(body_font.render(line, True, theme.WHITE), (34, 128 + index * 32))
         else:
             surface.blit(
                 body_font.render("Sin procesos disponibles.", True, theme.WHITE),

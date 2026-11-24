@@ -15,12 +15,12 @@ def draw_help_view(
 ) -> None:
     """Render titled help sections with wrapped text and common button guidance."""
     pygame.draw.rect(surface, theme.BLACK, (0, 55, theme.WIDTH, 370))
-    surface.blit(title_font.render(title[:32], True, theme.ORANGE), (28, 72))
+    surface.blit(title_font.render(title[:28], True, theme.ORANGE), (28, 72))
     y = 124
     for heading, paragraphs in sections:
         if y >= 386:
             break
-        surface.blit(body_font.render(heading[:48], True, theme.AMBER), (30, y))
+        surface.blit(body_font.render(heading[:35], True, theme.AMBER), (30, y))
         y += body_font.get_linesize() + 8
         for paragraph in paragraphs:
             for line in _wrap_text(paragraph, small_font, 575):

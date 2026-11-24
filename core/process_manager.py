@@ -26,6 +26,7 @@ class RunningCommand:
     started_at: float
     timeout_seconds: int
     output_path: Path
+    last_output_read: float = 0.0
 
 
 class ProcessManager:
@@ -55,11 +56,14 @@ class ProcessManager:
     def start_update(self, timeout_seconds: int = 180) -> bool:
         """Run deploy/update.sh with the same guarded launcher as tool commands."""
         command = ["bash", str(self.root / "deploy" / "update.sh")]
+        environment = os.environ.copy()
+        environment["HUNTERZERO_UPDATE_GUI"] = "1"
         return self._launch(
             UPDATE_LABEL,
             command,
             timeout_seconds,
             "No está instalado bash; no se puede actualizar ahora.",
+            environment,
         )
 
     def _launch(
@@ -68,6 +72,7 @@ class ProcessManager:
         command: list[str],
         timeout_seconds: int,
         missing_message: str,
+        environment: dict[str, str] | None = None,
     ) -> bool:
         """Shared guards and subprocess launch for tool and update commands."""
         if self.running and self.running.process.poll() is None:
@@ -92,15 +97,17 @@ class ProcessManager:
         try:
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_file = output_path.open("wb")
+            popen_kwargs = {
+                "stdin": subprocess.DEVNULL,
+                "stdout": output_file,
+                "stderr": subprocess.STDOUT,
+                "shell": False,
+                "close_fds": True,
+            }
+            if environment is not None:
+                popen_kwargs["env"] = environment
             try:
-                process = subprocess.Popen(
-                    [executable, *command[1:]],
-                    stdin=subprocess.DEVNULL,
-                    stdout=output_file,
-                    stderr=subprocess.STDOUT,
-                    shell=False,
-                    close_fds=True,
-                )
+                process = subprocess.Popen([executable, *command[1:]], **popen_kwargs)
             finally:
                 output_file.close()
         except OSError as error:
@@ -116,6 +123,7 @@ class ProcessManager:
             started_at=time.monotonic(),
             timeout_seconds=timeout_seconds,
             output_path=output_path,
+            last_output_read=time.monotonic(),
         )
         self.logger.info("Se inició %s (pid %d).", label, process.pid)
         return True
@@ -138,6 +146,10 @@ class ProcessManager:
 
         return_code = task.process.poll()
         if return_code is None:
+            # Muestra el log mientras corre para que la pantalla tenga progreso real.
+            if time.monotonic() - task.last_output_read >= 0.25:
+                self.output = self._read_output(task.output_path)
+                task.last_output_read = time.monotonic()
             return
 
         self.output = self._read_output(task.output_path)

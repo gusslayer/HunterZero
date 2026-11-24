@@ -28,7 +28,7 @@ class ProcessSnapshot:
     elapsed: str
 
 
-def snapshot_processes(limit: int = 10) -> tuple[ProcessSnapshot, ...]:
+def snapshot_processes(limit: int = 7) -> tuple[ProcessSnapshot, ...]:
     """Return up to `limit` processes sorted by CPU use, highest first."""
     uptime = _read_uptime()
     total_memory = _read_total_memory()

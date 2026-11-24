@@ -95,9 +95,12 @@ class HunterZeroApp:
         pygame.display.set_caption("HunterZero")
         self.surface = create_display()
         self.joysticks = initialize_joysticks(self.logger)
-        self.title_font = theme.load_font(16)
-        self.body_font = theme.load_font(13)
-        self.small_font = theme.load_font(9)
+        self.title_font = theme.load_font(20)
+        self.body_font = theme.load_font(16)
+        self.small_font = theme.load_font(12)
+        # Los botones mantenidos durante el arranque generan eventos al iniciar
+        # SDL; se descartan para no entrar en un módulo sin que el usuario pulse.
+        pygame.event.clear()
         clock = pygame.time.Clock()
         self.logger.info("Interfaz iniciada")
         try:
@@ -123,7 +126,9 @@ class HunterZeroApp:
             if action is None:
                 continue
             if action == QUIT:
-                self.running = False
+                # SDL puede emitir SDL_QUIT al cambiar de VT o consola. No hay
+                # ningún control de salida en la GPi: volver al menú, nunca cerrar.
+                self._close_tool_screen()
                 continue
             if self.menu.active_plugin:
                 self._handle_plugin_action(action)
@@ -149,15 +154,19 @@ class HunterZeroApp:
             return
         self.tool_screen = screen_type()
 
+    def _close_tool_screen(self) -> None:
+        """Return to the module list from any screen without stopping the app."""
+        self.menu.back()
+        self.tool_screen = None
+
     def _handle_plugin_action(self, action) -> None:
         """Route actions to the active tool or return to the module list."""
         if self.tool_screen:
             if self.tool_screen.handle(action, self.processes):
-                self.menu.back()
-                self.tool_screen = None
+                self._close_tool_screen()
             return
         if action == BACK:
-            self.menu.back()
+            self._close_tool_screen()
 
     def _tick(self) -> None:
         """Refresh cached telemetry, child-process state, and app heartbeat."""
@@ -226,7 +235,7 @@ class HunterZeroApp:
         if self.catalog.errors:
             self._draw_text("AVISO: revisa logs/app.log", 30, 412, self.small_font, theme.AMBER)
         if self.processes.message:
-            self._draw_text(self.processes.message, 30, 395, self.small_font, theme.AMBER)
+            self._draw_text(self.processes.message[:48], 30, 395, self.small_font, theme.AMBER)
 
     def _draw_text(self, text: str, x: int, y: int, font: pygame.font.Font, color) -> None:
         """Draw one string at an exact pixel coordinate."""
