@@ -20,7 +20,7 @@ class PingScreen(ParameterizedToolScreen):
                 (
                     "CONFIGURAR",
                     (
-                        "Selecciona IP DESTINO y edita los octetos con el D-pad.",
+                        "IP DESTINO: D-pad mueve entre digitos y cambia su valor.",
                         "En PAQUETES ICMP usa izquierda/derecha para elegir de 1 a 4.",
                     ),
                 ),
@@ -28,7 +28,7 @@ class PingScreen(ParameterizedToolScreen):
                     "EJECUTAR",
                     (
                         "Selecciona ENVIAR PING y confirma con A; B cancela.",
-                        "Solo se admiten direcciones IPv4 privadas RFC1918.",
+                        "Se admite cualquier IPv4; cada octeto debe estar entre 0 y 255.",
                     ),
                 ),
             ),

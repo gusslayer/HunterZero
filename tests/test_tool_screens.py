@@ -63,6 +63,12 @@ class ToolScreenTests(unittest.TestCase):
         screen.handle(OPEN, processes)
         screen.handle(RIGHT, processes)
         screen.handle(RIGHT, processes)
+        screen.handle(RIGHT, processes)
+        screen.handle(RIGHT, processes)
+        screen.handle(RIGHT, processes)
+        screen.handle(RIGHT, processes)
+        screen.handle(RIGHT, processes)
+        screen.handle(RIGHT, processes)
         screen.handle(UP, processes)
         screen.handle(OPEN, processes)
 
@@ -79,11 +85,36 @@ class ToolScreenTests(unittest.TestCase):
         self.assertEqual(processes.commands[0][1][0], "ping")
         self.assertIn("192.168.2.1", processes.commands[0][1])
 
+    def test_ip_editor_can_save_a_public_address_digit_by_digit(self):
+        """Allow any IPv4 by editing individual digits, not only RFC1918 ranges."""
+        screen = PingScreen()
+        processes = FakeProcessManager()
+        screen.handle(OPEN, processes)
+        screen.handle(DOWN, processes)
+        screen.handle(RIGHT, processes)
+        screen.handle(UP, processes)
+        screen.handle(RIGHT, processes)
+        for _ in range(6):
+            screen.handle(UP, processes)
+        screen.handle(OPEN, processes)
+        self.assertEqual(screen.target.address, "8.168.1.1")
+        screen.handle(DOWN, processes)
+        screen.handle(DOWN, processes)
+        screen.handle(OPEN, processes)
+        screen.handle(OPEN, processes)
+        self.assertIn("8.168.1.1", processes.commands[0][1])
+
     def test_nmap_has_an_independent_scan_and_cancellable_process_flow(self):
         """Confirm Nmap, verify its own executable, and cancel with the B action."""
         screen = NmapScreen()
         processes = FakeProcessManager()
         screen.handle(OPEN, processes)
+        screen.handle(RIGHT, processes)
+        screen.handle(RIGHT, processes)
+        screen.handle(RIGHT, processes)
+        screen.handle(RIGHT, processes)
+        screen.handle(RIGHT, processes)
+        screen.handle(RIGHT, processes)
         screen.handle(RIGHT, processes)
         screen.handle(RIGHT, processes)
         screen.handle(UP, processes)

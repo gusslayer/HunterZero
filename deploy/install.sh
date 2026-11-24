@@ -45,9 +45,10 @@ apt-get update
 # entrada (gamepad/teclado) y la del sistema (logind/systemctl).
 # EGL, GLES, GBM, Mesa y libdrm son necesarios en tiempo de ejecución para el
 # driver kmsdrm de SDL2; sin ellos pygame falla con "EGL not initialized".
+# gpiod aporta gpioset/gpiomon para vigilar el botón físico de encendido.
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
     ca-certificates git sudo udev dbus python3 python3-venv python3-pip \
-    python3-pygame python3-yaml \
+    python3-pygame python3-yaml gpiod \
     libsdl2-2.0-0 libsdl2-ttf-2.0-0 libsdl2-gfx-1.0-0 \
     libegl1 libegl-mesa0 libgles2 libgbm1 libgl1-mesa-dri libdrm2 libegl-dev
 
@@ -74,7 +75,19 @@ sed -e "s|@APP_USER@|$APP_USER|g" -e "s|@APP_DIR@|$APP_DIR|g" \
     "$APP_DIR/deploy/hunterzero.service" > "$service_tmp"
 install -m 0644 "$service_tmp" /etc/systemd/system/hunterzero.service
 rm -f "$service_tmp"
+
+# El apagado físico vive fuera de la app: debe funcionar aunque la interfaz no
+# esté arrancada. Se instala como root y usa libgpiod, no RPi.GPIO.
+install -m 0755 "$APP_DIR/deploy/hunterzero-poweroff.sh" /usr/local/bin/hunterzero-poweroff
+install -m 0644 "$APP_DIR/deploy/hunterzero-poweroff.service" \
+    /etc/systemd/system/hunterzero-poweroff.service
+
 systemctl daemon-reload
+if [[ -e /dev/gpiochip0 ]]; then
+    systemctl enable --now hunterzero-poweroff.service
+else
+    echo "Aviso: no existe /dev/gpiochip0; no se habilitó el apagado por GPIO." >&2
+fi
 
 # Configura la pantalla DPI de la GPi Case 2W. En equipos sin /boot/firmware
 # (por ejemplo, una prueba en i386) se omite sin abortar la instalación.
@@ -89,4 +102,5 @@ bash "$APP_DIR/deploy/deps.sh"
 
 echo "Instalación lista. Cierra y abre sesión para aplicar los grupos input/video."
 echo "Si se instaló la configuración de pantalla, reinicia la Pi: sudo reboot"
+echo "El botón físico GPIO 26 apaga la Pi mediante hunterzero-poweroff.service."
 echo "Prueba la interfaz y luego ejecuta: sudo systemctl enable --now hunterzero.service"

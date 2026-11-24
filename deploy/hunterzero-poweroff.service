@@ -1,0 +1,16 @@
+[Unit]
+Description=HunterZero GPi physical power button (GPIO 26)
+# Permite reintentos infinitos si el chip GPIO aún no está listo al arrancar.
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/hunterzero-poweroff
+Restart=on-failure
+RestartSec=2
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

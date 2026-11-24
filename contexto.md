@@ -66,18 +66,22 @@ solo lo detiene una señal externa. Al arrancar se llama a `pygame.event.clear()
 para descartar pulsaciones mantenidas durante el boot. `create_display()` llama
 a `pygame.mouse.set_visible(False)` tras cada `set_mode()`: KMSDRM dibuja el
 cursor en un plane DRM fuera del surface y en tty1 no hay compositor que lo
-oculte. Las fuentes son 20/16/12 px y los textos se recortan al ancho útil de
+oculte. Las fuentes son 24/18/14 px y los textos se recortan al ancho útil de
 640 px, ajustando también posiciones y separadores del HUD para que no se
 solapen.
 
-Pygame SDL GameController normaliza botones/d-pad. Para mandos no mapeados se
-mantiene fallback de joystick: hat/axis y botones físicos estándar A=0, B=1,
-START=6. Los eventos legacy del mismo control mapeado se ignoran para evitar
-doble activación.
+Se aceptan las tres familias de entrada que puede emitir la GPi Case 2W:
+teclas GPIO (D-pad, A, B, START), `JOYBUTTONDOWN`/`JOYHATMOTION`/`JOYAXISMOTION`
+y eventos normalizados de SDL GameController. Ignorar las familias legacy o las
+teclas dejaba **todos los botones sin respuesta**; ahora solo se suprime la
+repetición de la misma pulsación entre familias durante 150 ms. Ninguna tecla
+del teclado cierra la app: solo `SDL_QUIT` vuelve al menú. Con
+`HUNTERZERO_INPUT_DEBUG=1` se registran los eventos SDL crudos; la sonda
+`tools/input_probe.py` los muestra desde SSH.
 
 Flujo de Ping/Nmap:
 1. Abrir la herramienta usando D-pad y A.
-2. Elegir destino, editar la IPv4 privada con D-pad y confirmar con A.
+2. Elegir destino, editar cualquier IPv4 dígito a dígito con D-pad y guardar con A.
 3. Ajustar paquetes o cantidad de puertos con izquierda/derecha.
 4. Seleccionar la acción y revisar la pantalla de confirmación.
 5. A ejecuta; B cancela. La UI presenta estado/resultado sin bloquear el loop.
@@ -117,17 +121,19 @@ texto ni añadir una terminal genérica. No ejecutar Pygame como root ni agregar
 reglas sudo sin contraseña. El botón de actualización del menú ejecuta
 `deploy/update.sh` mediante `ProcessManager.start_update`, compartiendo
 esos controles y rechazando el comando si `bash` no está disponible. Se pasa
-`HUNTERZERO_UPDATE_GUI=1` para que solo haga `git pull`: sin tty `sudo` no puede
-pedir contraseña y reiniciar el servicio mataría la interfaz antes de mostrar el
-resultado. La pantalla muestra tiempo, log en vivo y una barra de actividad
-indeterminada (nunca un porcentaje falso, porque `git pull` no informa de avance);
-los pasos con root se indican al terminar para ejecutarlos por SSH.
+`HUNTERZERO_UPDATE_GUI=1` para que solo haga `git pull --ff-only --progress`:
+sin tty `sudo` no puede pedir contraseña y reiniciar el servicio mataría la
+interfaz antes de mostrar el resultado. Se desactiva `GIT_TERMINAL_PROMPT` para
+no colgar esperando credenciales. La pantalla muestra tiempo, log en vivo y una
+barra de actividad indeterminada (nunca un porcentaje falso); los pasos con root
+se indican al terminar para ejecutarlos por SSH.
 
 ## Trazabilidad de UI y errores
 
-- Los eventos del gamepad se normalizan a acciones UP/DOWN/LEFT/RIGHT/OPEN/BACK
-  y START antes de llegar a pantallas. START equivale a OPEN dentro de un módulo
-  para que ningún botón quede muerto. El timeout máximo es
+- Los eventos de teclado GPIO, joystick y gamepad se normalizan a acciones
+  UP/DOWN/LEFT/RIGHT/OPEN/BACK y START antes de llegar a pantallas. START
+  equivale a OPEN dentro de un módulo para que ningún botón quede muerto. El
+  timeout máximo es
   `MAX_COMMAND_TIMEOUT_SECONDS` (180 s) y Nmap usa ese valor: un timeout mayor
   hacía que `ProcessManager` rechazara el escaneo sin lanzarlo.
 - Ping y Nmap mantienen estado propio de ajustes, edición, confirmación,
@@ -147,7 +153,8 @@ los pasos con root se indican al terminar para ejecutarlos por SSH.
 
 - Pi Zero W, imagen armhf de 32 bits, Python 3.13 de Trixie.
 - Paquetes APT: `python3`, `python3-venv`, `python3-pygame`,
-  `python3-yaml`, `iputils-ping`, `nmap`, `git`, y para SDL `kmsdrm`:
+  `python3-yaml`, `iputils-ping`, `nmap`, `git`, `gpiod` (señales GPIO del
+  botón físico), y para SDL `kmsdrm`:
   `libegl1`, `libegl-mesa0`, `libgles2`, `libgbm1`, `libgl1-mesa-dri`, `libdrm2`
   y `libegl-dev` (verificado: sin él `pygame` termina con `EGL not initialized`).
   Sin EGL/GBM/Mesa, `pygame.display.set_mode` falla con `EGL not initialized`.
@@ -158,17 +165,24 @@ los pasos con root se indican al terminar para ejecutarlos por SSH.
   y hereda los grupos del usuario.
 - `deploy/install.sh` instala `deploy/config.txt` en `/boot/firmware/config.txt`
   mediante `deploy/display-config.sh`: timings DPI 640×480, `vc4-kms-v3d` +
-  `vc4-kms-dpi-generic`, apagado por GPIO 26 y audio PWM. Respaldar el original
-  como `config.txt.hunterzero.bak` y reiniciar para aplicarlo. `update.sh` no lo
+  `vc4-kms-dpi-generic` y audio PWM. Respaldar el original como
+  `config.txt.hunterzero.bak` y reiniciar para aplicarlo. `update.sh` no lo
   sobrescribe en cada actualización.
+- El apagado físico usa `hunterzero-poweroff.service` (root): mantiene GPIO 27
+  en alto con `gpioset` y programa `shutdown -h now` al flanco descendente de
+  GPIO 26 con `gpiomon`, según el esquema oficial de RetroFlag. No se usan los
+  overlays `gpio-shutdown` ni `gpio-led` porque reclamarían esas líneas. El
+  servicio se instala en `/usr/local/bin` y funciona aunque la app no esté
+  arrancada; no añade reglas sudoers.
 - `core/screen.py` intenta `kmsdrm` y, si EGL falla, `fbcon` (framebuffer del
   kernel); solo usa `dummy` cuando no se forzó ningún driver. Cada degradación
   se registra con un aviso en `logs/app.log`.
 - Probar driver SDL, pantalla y gamepad desde la consola antes de habilitar
   `hunterzero.service` en tty1. El modo KMS/DRM depende de la imagen GPi.
-- `deploy/update.sh` realiza `git pull --ff-only`, instala los paquetes APT
-  nuevos declarados por los módulos con `deploy/deps.sh` y reinicia el
-  servicio.
+- `deploy/update.sh` realiza `git pull --ff-only --progress` con salida
+  progresiva visible, instala los paquetes APT nuevos declarados por los
+  módulos con `deploy/deps.sh` y reinicia el servicio. Desde la GUI solo se
+  descarga el código; el resto se termina por SSH con sudo.
 
 ## Licencias y calidad
 

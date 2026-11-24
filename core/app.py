@@ -104,9 +104,11 @@ class HunterZeroApp:
         self.surface = create_display()
         _hide_mouse_cursor()
         self.joysticks = initialize_joysticks(self.logger)
-        self.title_font = theme.load_font(20)
-        self.body_font = theme.load_font(16)
-        self.small_font = theme.load_font(12)
+        # Press Start 2P es monoespacio: 24/18/14 px caben en 640x480 sin
+        # recortes y son legibles en la pantalla DPI de 3,5" de la GPi.
+        self.title_font = theme.load_font(24)
+        self.body_font = theme.load_font(18)
+        self.small_font = theme.load_font(14)
         # Los botones mantenidos durante el arranque generan eventos al iniciar
         # SDL; se descartan para no entrar en un módulo sin que el usuario pulse.
         pygame.event.clear()

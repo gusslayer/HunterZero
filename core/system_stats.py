@@ -1,9 +1,14 @@
 import os
 import shutil
+import socket
+import subprocess
 import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+
+
+NETWORK_REFRESH_SECONDS = 10.0
 
 
 @dataclass(frozen=True)
@@ -14,6 +19,63 @@ class SystemStats:
     battery_percent: int | None
     clock: str
     wifi_connected: bool
+    local_ip: str
+    ssid: str | None
+
+
+def local_ip_address() -> str:
+    """Return the address of the interface used for outbound traffic."""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            # UDP connect only selects a route; it sends no packets.
+            sock.connect(("8.8.8.8", 80))
+            return sock.getsockname()[0]
+    except OSError:
+        return "N/D"
+
+
+def _wireless_interfaces() -> list[str]:
+    """List wlan interfaces exposed by sysfs, falling back to the common name."""
+    try:
+        found = [entry.name for entry in Path("/sys/class/net").iterdir() if entry.name.startswith("wlan")]
+    except OSError:
+        found = []
+    return sorted(found) or ["wlan0"]
+
+
+def wireless_ssid() -> str | None:
+    """Read the connected SSID from iw, wireless-tools, or NetworkManager."""
+    for interface in _wireless_interfaces():
+        commands = (
+            ["iw", "dev", interface, "link"],
+            ["iwgetid", "-r"],
+            ["nmcli", "-t", "-f", "active,ssid", "dev", "wifi"],
+        )
+        for command in commands:
+            try:
+                result = subprocess.run(
+                    command, capture_output=True, text=True, timeout=1, check=False
+                )
+            except (OSError, subprocess.SubprocessError):
+                continue
+            for raw_line in result.stdout.splitlines():
+                line = raw_line.strip()
+                if not line:
+                    continue
+                if command[0] == "iw":
+                    # `iw dev ... link` imprime BSS, señal, etc. Solo SSID identifica
+                    # la red conectada; aceptar cualquier línea devolvía el BSS.
+                    if not line.startswith("SSID:"):
+                        continue
+                    candidate = line.split(":", 1)[1].strip()
+                elif command[0] == "iwgetid":
+                    candidate = line.rsplit(":", 1)[1].strip() if ":" in line else line
+                else:
+                    active, separator, ssid = line.partition(":")
+                    candidate = ssid.strip() if separator and active == "yes" else ""
+                if candidate:
+                    return candidate
+    return None
 
 
 def disk_usage_percent(path: Path) -> int:
@@ -29,11 +91,18 @@ def disk_usage_percent(path: Path) -> int:
 
 class StatsReader:
     def __init__(self) -> None:
-        """Initialize CPU counters used to calculate usage between samples."""
+        """Initialize CPU counters and the cached network identity."""
         self._previous_cpu: tuple[int, int] | None = None
+        self._network_cache: tuple[str, str | None] | None = None
+        self._network_read_at = 0.0
 
     def read(self) -> SystemStats:
-        """Read the current HUD metrics from procfs and sysfs."""
+        """Read the current HUD metrics from procfs, sysfs, and the network."""
+        now = time.monotonic()
+        if self._network_cache is None or now - self._network_read_at >= NETWORK_REFRESH_SECONDS:
+            self._network_cache = (local_ip_address(), wireless_ssid())
+            self._network_read_at = now
+        local_ip, ssid = self._network_cache
         return SystemStats(
             cpu_percent=self._cpu_percent(),
             memory_percent=self._memory_percent(),
@@ -41,6 +110,8 @@ class StatsReader:
             battery_percent=self._battery(),
             clock=datetime.now().strftime("%H:%M"),
             wifi_connected=self._wifi_connected(),
+            local_ip=local_ip,
+            ssid=ssid,
         )
 
     @staticmethod

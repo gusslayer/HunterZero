@@ -17,6 +17,8 @@ class UpdateScreen:
         self.title = "ACTUALIZAR HUNTERZERO"
         self.phase = "confirm"
         self.started_at = 0.0
+        self.last_sync = 0.0
+        self.activity = 0.0
 
     def handle(self, action, processes: ProcessManager) -> bool:
         """Start the update on OPEN, cancel on BACK, and exit when finished."""
@@ -26,6 +28,8 @@ class UpdateScreen:
                     self.phase = "result"
                     return False
                 self.started_at = time.monotonic()
+                self.last_sync = self.started_at
+                self.activity = 0.0
                 self.phase = "running"
             elif action == BACK:
                 return True
@@ -38,7 +42,11 @@ class UpdateScreen:
         return True
 
     def sync(self, processes: ProcessManager) -> None:
-        """Move to the result view when the update process finishes."""
+        """Advance the activity marker and move to results once git finishes."""
+        now = time.monotonic()
+        if self.phase == "running":
+            self.activity += max(0.0, now - self.last_sync)
+        self.last_sync = now
         if self.phase == "running" and processes.running is None:
             self.phase = "result"
 
@@ -53,36 +61,41 @@ class UpdateScreen:
     ) -> None:
         """Render the confirmation, running progress, or result view of the update."""
         del stats
-        surface.fill(theme.BLACK)
+        pygame.draw.rect(surface, theme.BLACK, (0, 55, theme.WIDTH, 370))
         surface.blit(title_font.render(self.title, True, theme.ORANGE), (30, 72))
         if self.phase == "confirm":
             lines = (
-                "Descarga el código con git pull --ff-only.",
-                "Los pasos que necesitan sudo se indican al terminar.",
+                "Descarga el codigo con git pull --ff-only.",
+                "Los pasos con sudo se indican al terminar.",
                 "A: actualizar    B: volver",
             )
+            for index, line in enumerate(lines):
+                surface.blit(small_font.render(line[:40], True, theme.WHITE), (30, 132 + index * 38))
         elif self.phase == "running":
-            elapsed = int(time.monotonic() - self.started_at) if self.started_at else 0
+            elapsed = max(0, int(time.monotonic() - self.started_at)) if self.started_at else 0
             dots = "." * (elapsed % 4)
-            lines = (
-                f"ACTUALIZANDO HUNTERZERO{dots}",
-                f"Esperando git pull: {elapsed}s (máx. 180s)",
-                *[line[:46] for line in processes.output.splitlines()[-2:]],
-                "B cancela la descarga.",
+            surface.blit(
+                body_font.render(f"ACTUALIZANDO{dots}", True, theme.WHITE), (30, 118)
             )
+            surface.blit(
+                small_font.render(f"Esperando git: {elapsed}s (max. 180s)", True, theme.ORANGE),
+                (30, 156),
+            )
+            for index, line in enumerate(processes.output.splitlines()[-3:]):
+                surface.blit(small_font.render(line[:40], True, theme.WHITE), (30, 196 + index * 26))
+            self._draw_progress(surface)
+            surface.blit(small_font.render("B cancela la descarga.", True, theme.AMBER), (30, 380))
         else:
-            lines = tuple([processes.message[:46], *processes.output.splitlines()[-6:]])
-        for index, line in enumerate(lines):
-            color = theme.AMBER if index == 0 else theme.WHITE
-            surface.blit(small_font.render(line[:46], True, color), (30, 132 + index * 44))
-        if self.phase == "running":
-            self._draw_progress(surface, elapsed)
+            lines = (processes.message[:40], *processes.output.splitlines()[-6:])
+            for index, line in enumerate(lines):
+                color = theme.AMBER if index == 0 else theme.WHITE
+                surface.blit(small_font.render(line[:40], True, color), (30, 124 + index * 30))
 
-    def _draw_progress(self, surface: pygame.Surface, elapsed: int) -> None:
-        """Show indeterminate activity; git pull does not expose real progress."""
-        pygame.draw.rect(surface, theme.DIM_ORANGE, (30, 350, 580, 12))
-        position = 30 + int((elapsed * 90) % 540)
-        pygame.draw.rect(surface, theme.ORANGE, (position, 350, 40, 12))
+    def _draw_progress(self, surface: pygame.Surface) -> None:
+        """Draw a smooth indeterminate marker because git reports no percentage."""
+        pygame.draw.rect(surface, theme.DIM_ORANGE, (30, 330, 580, 14))
+        position = 30 + int((self.activity * 140) % 540)
+        pygame.draw.rect(surface, theme.ORANGE, (position, 330, 40, 14))
 
     def footer_hints(self) -> list[tuple[str, int]]:
         """Return button labels for the current update-screen state."""

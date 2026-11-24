@@ -11,22 +11,22 @@ def _text(surface: pygame.Surface, font: pygame.font.Font, value: str, x: int, y
 
 def draw_hud(surface: pygame.Surface, font: pygame.font.Font, stats: SystemStats) -> None:
     """Draw system metrics, hardware symbols, Wi-Fi, battery, and clock."""
-    pygame.draw.rect(surface, theme.BLACK, (0, 0, theme.WIDTH, 54))
-    pygame.draw.line(surface, theme.ORANGE, (20, 53), (620, 53), 2)
-    _draw_chip(surface, 12, 19, 17)
-    _draw_memory(surface, 144, 20)
-    _draw_thermometer(surface, 278, 18)
-    _draw_battery(surface, 436, 20, stats.battery_percent is not None)
-    _text(surface, font, f"CPU:{stats.cpu_percent:02d}%", 36, 22)
-    _text(surface, font, f"RAM:{stats.memory_percent:02d}%", 170, 22)
+    pygame.draw.rect(surface, theme.BLACK, (0, 0, theme.WIDTH, 52))
+    pygame.draw.line(surface, theme.ORANGE, (20, 51), (620, 51), 2)
+    _draw_chip(surface, 12, 18, 16)
+    _draw_memory(surface, 148, 19)
+    _draw_thermometer(surface, 282, 16)
+    _text(surface, font, f"CPU:{stats.cpu_percent:02d}", 34, 20)
+    _text(surface, font, f"RAM:{stats.memory_percent:02d}", 170, 20)
     temperature = f"{stats.temperature_c}C" if stats.temperature_c is not None else "--C"
-    _text(surface, font, f"TEMP:{temperature}", 298, 22)
-    draw_wifi(surface, 412, 28, stats.wifi_connected)
+    _text(surface, font, f"TEMP:{temperature}", 300, 20)
+    draw_wifi(surface, 442, 28, stats.wifi_connected)
+    _draw_battery(surface, 462, 19, stats.battery_percent is not None)
     battery = f"{stats.battery_percent}%" if stats.battery_percent is not None else "--%"
-    _text(surface, font, battery, 463, 22)
-    _text(surface, font, stats.clock, 522, 22)
-    for x in (138, 272, 398, 430, 516):
-        pygame.draw.line(surface, theme.ORANGE, (x, 13), (x, 43), 2)
+    _text(surface, font, battery, 490, 20)
+    _text(surface, font, stats.clock, 552, 20)
+    for x in (140, 274, 432, 546):
+        pygame.draw.line(surface, theme.ORANGE, (x, 12), (x, 42), 2)
 
 
 def _draw_chip(surface: pygame.Surface, x: int, y: int, size: int) -> None:

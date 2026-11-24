@@ -51,8 +51,8 @@ class ProcMonitorScreen:
         """Render the process list or the shared gamepad help view."""
         del processes
         del stats
-        surface.fill(theme.BLACK)
-        surface.blit(title_font.render("MONITOR DE PROCESOS", True, theme.ORANGE), (30, 72))
+        pygame.draw.rect(surface, theme.BLACK, (0, 55, theme.WIDTH, 370))
+        surface.blit(title_font.render("MONITOR PROCESOS", True, theme.ORANGE), (30, 72))
         if self.show_help:
             draw_help_view(
                 surface,
@@ -65,7 +65,7 @@ class ProcMonitorScreen:
                         "PROCESOS ACTIVOS",
                         (
                             "Top por CPU; PID, %CPU, %MEM y tiempo transcurrido.",
-                            "Refresca cada ciclo de la app; no lanza procesos.",
+                            "Refresca cada segundo; no lanza procesos.",
                         ),
                     ),
                     ("CONTROLES", ("A alterna esta ayuda; B vuelve al menu.",)),
@@ -75,16 +75,16 @@ class ProcMonitorScreen:
         if self.processes:
             for index, snap in enumerate(self.processes):
                 line = (
-                    f"{snap.name[:11]:<11} {snap.pid:>5} {snap.cpu_percent:4.0f}% "
-                    f"{snap.memory_percent:4.0f}% {snap.elapsed[:7]}"
+                    f"{snap.name[:8]:<8} {snap.pid:>5} {snap.cpu_percent:3.0f}% "
+                    f"{snap.memory_percent:3.0f}% {snap.elapsed[:5]}"
                 )
-                surface.blit(body_font.render(line, True, theme.WHITE), (34, 128 + index * 32))
+                surface.blit(body_font.render(line, True, theme.WHITE), (34, 116 + index * 28))
         else:
             surface.blit(
                 body_font.render("Sin procesos disponibles.", True, theme.WHITE),
                 (34, 128),
             )
-        surface.blit(small_font.render("A: ayuda    B: volver", True, theme.AMBER), (34, 365))
+        surface.blit(small_font.render("A: ayuda    B: volver", True, theme.AMBER), (34, 380))
 
     def footer_hints(self) -> list[tuple[str, int]]:
         """Return gamepad guidance for the process list or help page."""

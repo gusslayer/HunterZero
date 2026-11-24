@@ -10,11 +10,13 @@ from modules.nmap.screen import NmapScreen
 class NmapCommandTests(unittest.TestCase):
     """Test Nmap argv construction without scanning a live device."""
 
-    def test_only_private_ipv4_targets_are_allowed(self):
-        """Reject targets outside a manually specified RFC1918 IPv4 address."""
+    def test_any_single_ipv4_target_is_allowed(self):
+        """Accept a manually specified IPv4 address regardless of its range."""
         self.assertEqual(validate_target("10.0.0.2"), "10.0.0.2")
-        with self.assertRaises(ValueError):
-            validate_target("203.0.113.1")
+        self.assertEqual(validate_target("203.0.113.1"), "203.0.113.1")
+        for target in ("example.com", "10.0.0.0/8", "::1", "10.0.0.1;id"):
+            with self.subTest(target=target), self.assertRaises(ValueError):
+                validate_target(target)
 
     def test_command_is_unprivileged_slow_and_limited_to_common_ports(self):
         """Build a bounded TCP-connect command and reject arbitrary port limits."""

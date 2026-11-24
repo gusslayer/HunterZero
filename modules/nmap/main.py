@@ -1,27 +1,20 @@
-"""Validate private IPv4 targets and build conservative Nmap commands."""
+"""Validate IPv4 targets and build conservative Nmap commands."""
 
 # Este archivo solo genera argumentos: la ejecución pasa por ProcessManager.
 import ipaddress
 
 
-PRIVATE_NETWORKS = (
-    ipaddress.ip_network("10.0.0.0/8"),
-    ipaddress.ip_network("172.16.0.0/12"),
-    ipaddress.ip_network("192.168.0.0/16"),
-)
 PORT_COUNTS = (20, 50, 100)
 
 
 def validate_target(target: str) -> str:
-    """Return a normalized private IPv4 address or raise a clear validation error."""
+    """Return a normalized IPv4 address or raise a clear validation error."""
     try:
         address = ipaddress.ip_address(target)
     except ValueError as error:
-        raise ValueError("Ingresa una dirección IPv4 privada válida.") from error
-    if not isinstance(address, ipaddress.IPv4Address) or not any(
-        address in network for network in PRIVATE_NETWORKS
-    ):
-        raise ValueError("Solo se permiten direcciones privadas de la red local.")
+        raise ValueError("Ingresa una dirección IPv4 válida.") from error
+    if not isinstance(address, ipaddress.IPv4Address):
+        raise ValueError("Solo se permiten direcciones IPv4.")
     return str(address)
 
 

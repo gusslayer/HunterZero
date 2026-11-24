@@ -21,7 +21,7 @@ class NmapScreen(ParameterizedToolScreen):
                 (
                     "CONFIGURAR",
                     (
-                        "Selecciona IP DESTINO y edita los octetos con el D-pad.",
+                        "IP DESTINO: D-pad mueve entre digitos y cambia su valor.",
                         "En PUERTOS TCP elige 20, 50 o 100 puertos comunes.",
                     ),
                 ),
@@ -29,7 +29,7 @@ class NmapScreen(ParameterizedToolScreen):
                     "EJECUTAR",
                     (
                         "Selecciona INICIAR NMAP y confirma con A; B cancela.",
-                        "Usa TCP connect lento y scripts NSE de la categoría vuln; solo IPv4 privadas autorizadas.",
+                        "TCP connect lento y scripts NSE vuln; usa solo equipos autorizados.",
                     ),
                 ),
             ),

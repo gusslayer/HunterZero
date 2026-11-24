@@ -61,7 +61,7 @@ class SystemMonitorScreen:
                     (
                         "LECTURAS LOCALES",
                         (
-                            "CPU, RAM, temperatura, Wi-Fi, bateria, disco y hora.",
+                            "CPU, RAM, temperatura, IP, SSID, Wi-Fi, bateria, disco y hora.",
                             "Temperatura y bateria dependen de lo que exponga el sistema.",
                         ),
                     ),
@@ -70,21 +70,23 @@ class SystemMonitorScreen:
             )
             return
         pygame.draw.rect(surface, theme.BLACK, (0, 55, theme.WIDTH, 370))
-        surface.blit(title_font.render("MONITOR DEL SISTEMA", True, theme.ORANGE), (30, 72))
+        surface.blit(title_font.render("MONITOR SISTEMA", True, theme.ORANGE), (30, 72))
         temperature = f"{stats.temperature_c} C" if stats.temperature_c is not None else "N/D"
         battery = f"{stats.battery_percent}%" if stats.battery_percent is not None else "N/D"
         values = (
             f"CPU: {stats.cpu_percent}%",
             f"RAM: {stats.memory_percent}%",
-            f"DISK: {self.disk_percent}%",
-            f"TEMPERATURA: {temperature}",
-            f"WI-FI: {'CONECTADO' if stats.wifi_connected else 'NO DISPONIBLE'}",
+            f"DISCO: {self.disk_percent}%",
+            f"TEMP: {temperature}",
+            f"IP: {stats.local_ip}",
+            f"SSID: {stats.ssid or 'N/D'}",
+            f"WIFI: {'CONECTADO' if stats.wifi_connected else 'NO DISPONIBLE'}",
             f"BATERIA: {battery}",
             f"HORA: {stats.clock}",
         )
         for index, value in enumerate(values):
-            surface.blit(body_font.render(value, True, theme.WHITE), (34, 128 + index * 32))
-        surface.blit(small_font.render("A: ayuda    B: volver", True, theme.AMBER), (34, 365))
+            surface.blit(body_font.render(value[:30], True, theme.WHITE), (34, 112 + index * 28))
+        surface.blit(small_font.render("A: ayuda    B: volver", True, theme.AMBER), (34, 380))
 
     def footer_hints(self) -> list[tuple[str, int]]:
         """Return gamepad guidance for the monitor dashboard or help page."""

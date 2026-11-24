@@ -11,7 +11,12 @@ if [ "$(id -u)" -eq 0 ]; then
     echo "Ejecuta la actualización con tu usuario normal, usando sudo solo para systemctl." >&2
     exit 1
 fi
-git -C "$APP_DIR" pull --ff-only
+# Sin TTY, git no muestra progreso salvo que se pida explícitamente; la pantalla
+# necesita salida progresiva. Tampoco debe quedarse esperando credenciales.
+export GIT_TERMINAL_PROMPT=0
+echo "Descargando código con git pull --ff-only..."
+git -C "$APP_DIR" -c color.ui=false pull --ff-only --progress
+echo "Descarga completada."
 
 # La interfaz se actualiza a sí misma desde el gamepad: sin tty sudo no puede
 # pedir contraseña, y reiniciar el servicio aquí mataría la propia interfaz antes
