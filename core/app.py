@@ -50,7 +50,7 @@ def _draw_right_arrow(surface: pygame.Surface, rect: pygame.Rect, color) -> None
         color,
         [
             (rect.x, rect.y),
-            (rect.right, rect.center_y),
+            (rect.right, rect.centery),
             (rect.x, rect.bottom),
         ],
     )
