@@ -19,6 +19,7 @@ from core.ui import icons
 from core.ui.footer import draw_footer
 from core.ui.hud import draw_hud
 from core.ui.layout import MenuLayout
+from core.ui.text_cache import render_cached
 from core.ui.update_screen import UpdateScreen
 from modules.nmap.screen import NmapScreen
 from modules.ping.screen import PingScreen
@@ -31,9 +32,9 @@ ROOT = Path(__file__).resolve().parents[1]
 # En el menú principal B no cierra la interfaz: al soltar SDL/KMS el framebuffer
 # queda en blanco y el servicio no se reinicia solo. START/A abren las opciones.
 MENU_FOOTER_HINTS = [
-    ("D-PAD MOVER", 24),
-    ("A ABRIR", 190),
-    ("START ABRIR", 350),
+    ("D-PAD MOVER", 12),
+    ("A ABRIR", 116),
+    ("START ABRIR", 188),
 ]
 
 
@@ -91,6 +92,7 @@ class HunterZeroApp:
         ) = None
         self.joysticks = []
         self.surface: pygame.Surface
+        self.virtual_screen: pygame.Surface
         self.title_font: pygame.font.Font
         self.body_font: pygame.font.Font
         self.small_font: pygame.font.Font
@@ -102,13 +104,13 @@ class HunterZeroApp:
         pygame.init()
         pygame.display.set_caption("HunterZero")
         self.surface = create_display()
+        self.virtual_screen = pygame.Surface((320, 240)).convert()
         _hide_mouse_cursor()
         self.joysticks = initialize_joysticks(self.logger)
-        # Press Start 2P es monoespacio: 24/18/14 px caben en 640x480 sin
-        # recortes y son legibles en la pantalla DPI de 3,5" de la GPi.
-        self.title_font = theme.load_font(24)
-        self.body_font = theme.load_font(18)
-        self.small_font = theme.load_font(14)
+        self.title_font = theme.load_font(16)
+        # La fuente de tamaño 8 es una sola instancia: body y small comparten.
+        self.body_font = theme.load_font(8)
+        self.small_font = self.body_font
         # Los botones mantenidos durante el arranque generan eventos al iniciar
         # SDL; se descartan para no entrar en un módulo sin que el usuario pulse.
         pygame.event.clear()
@@ -119,6 +121,11 @@ class HunterZeroApp:
                 self._events()
                 self._tick()
                 self._draw()
+                pygame.transform.scale(
+                    self.virtual_screen,
+                    (theme.WINDOW_WIDTH, theme.WINDOW_HEIGHT),
+                    self.surface,
+                )
                 pygame.display.flip()
                 clock.tick(theme.FPS)
         finally:
@@ -210,11 +217,11 @@ class HunterZeroApp:
 
     def _draw(self) -> None:
         """Paint the shared HUD and whichever menu or tool screen is active."""
-        self.surface.fill(theme.BLACK)
-        draw_hud(self.surface, self.small_font, self.stats)
+        self.virtual_screen.fill(theme.BG_COLOR)
+        draw_hud(self.virtual_screen, self.small_font, self.stats)
         if self.tool_screen:
             self.tool_screen.draw(
-                self.surface,
+                self.virtual_screen,
                 self.title_font,
                 self.body_font,
                 self.small_font,
@@ -224,38 +231,47 @@ class HunterZeroApp:
         elif self.menu.active_plugin:
             self._draw_text(
                 "ERROR: PANTALLA DEL MODULO NO DISPONIBLE",
-                30,
-                190,
+                15,
+                95,
                 self.small_font,
-                theme.AMBER,
+                theme.ACCENT_COLOR,
             )
         else:
             self._draw_menu()
         hints = self.tool_screen.footer_hints() if self.tool_screen else MENU_FOOTER_HINTS
-        draw_footer(self.surface, self.small_font, hints)
+        draw_footer(self.virtual_screen, self.small_font, hints)
 
     def _draw_menu(self) -> None:
-        """Render the scrollable list of module folders."""
-        layout = MenuLayout(pygame.Rect(30, 70, 580, 340), 48, 4)
-        for index, plugin in enumerate(self.menu.plugins):
+        """Render the visible slice of module folders within the menu bounds."""
+        layout = MenuLayout(pygame.Rect(14, 35, 292, 170), 24, 2)
+        first, last = layout.visible_range(len(self.menu.plugins), self.menu.selected)
+        for index in range(first, last):
+            plugin = self.menu.plugins[index]
             row = layout.row_rect(index)
+            if row.bottom > layout.bounds.bottom:
+                break
             selected = index == self.menu.selected
-            background = theme.ORANGE if selected else theme.BLACK
-            foreground = theme.BLACK if selected else theme.ORANGE
-            pygame.draw.rect(self.surface, background, row, border_radius=5)
-            icons.draw_icon(self.surface, plugin.icon, pygame.Rect(row.x + 14, row.y + 7, 34, 34), foreground)
-            label = self.body_font.render(plugin.name, True, foreground)
-            self.surface.blit(label, (row.x + 75, row.y + 15))
-            arrow = self.title_font.render(">", True, foreground)
-            self.surface.blit(arrow, (row.right - 32, row.y + 13))
+            background = theme.ACCENT_COLOR if selected else theme.BG_COLOR
+            foreground = theme.BG_COLOR if selected else theme.TEXT_COLOR
+            pygame.draw.rect(self.virtual_screen, background, row)
+            icons.draw_icon(
+                self.virtual_screen,
+                plugin.icon,
+                pygame.Rect(row.x + 7, row.y + 3, 17, 17),
+                foreground,
+            )
+            label = render_cached(self.body_font, plugin.name, foreground)
+            self.virtual_screen.blit(label, (row.x + 38, row.y + 8))
+            arrow = render_cached(self.body_font, ">", foreground)
+            self.virtual_screen.blit(arrow, (row.right - 12, row.y + 8))
         if self.catalog.errors:
-            self._draw_text("AVISO: revisa logs/app.log", 30, 412, self.small_font, theme.AMBER)
+            self._draw_text("AVISO: revisa logs/app.log", 15, 196, self.small_font, theme.ACCENT_COLOR)
         if self.processes.message:
-            self._draw_text(self.processes.message[:48], 30, 395, self.small_font, theme.AMBER)
+            self._draw_text(self.processes.message[:38], 15, 184, self.small_font, theme.ACCENT_COLOR)
 
     def _draw_text(self, text: str, x: int, y: int, font: pygame.font.Font, color) -> None:
         """Draw one string at an exact pixel coordinate."""
-        self.surface.blit(font.render(text, True, color), (x, y))
+        self.virtual_screen.blit(render_cached(font, text, color), (x, y))
 
 
 def run() -> None:

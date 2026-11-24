@@ -29,7 +29,10 @@ def create_display() -> pygame.Surface:
         pygame.display.quit()
         try:
             pygame.display.init()
-            surface = pygame.display.set_mode((theme.WIDTH, theme.HEIGHT), flags)
+            surface = pygame.display.set_mode(
+                (theme.WINDOW_WIDTH, theme.WINDOW_HEIGHT),
+                flags,
+            )
             try:
                 # KMSDRM muestra el cursor en un plane DRM ajeno al surface.
                 pygame.mouse.set_visible(False)

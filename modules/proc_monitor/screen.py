@@ -51,8 +51,8 @@ class ProcMonitorScreen:
         """Render the process list or the shared gamepad help view."""
         del processes
         del stats
-        pygame.draw.rect(surface, theme.BLACK, (0, 55, theme.WIDTH, 370))
-        surface.blit(title_font.render("MONITOR PROCESOS", True, theme.ORANGE), (30, 72))
+        pygame.draw.rect(surface, theme.BG_COLOR, (0, 28, theme.WIDTH, 184))
+        surface.blit(title_font.render("MONITOR PROCESOS", False, theme.ACCENT_COLOR), (15, 36))
         if self.show_help:
             draw_help_view(
                 surface,
@@ -73,19 +73,25 @@ class ProcMonitorScreen:
             )
             return
         if self.processes:
+            surface.blit(
+                body_font.render("PID %CPU %MEM HRA", False, theme.MUTED_COLOR), (17, 58)
+            )
             for index, snap in enumerate(self.processes):
+                y = 70 + index * 16
+                if y + body_font.get_height() >= 212:
+                    break
                 line = (
-                    f"{snap.name[:8]:<8} {snap.pid:>5} {snap.cpu_percent:3.0f}% "
-                    f"{snap.memory_percent:3.0f}% {snap.elapsed[:5]}"
+                    f"{snap.name[:7]:<7} {snap.pid:>5} {snap.cpu_percent:3.0f}% "
+                    f"{snap.memory_percent:3.0f}% {snap.elapsed[:4]}"
                 )
-                surface.blit(body_font.render(line, True, theme.WHITE), (34, 116 + index * 28))
+                surface.blit(body_font.render(line, False, theme.TEXT_COLOR), (17, y))
         else:
             surface.blit(
-                body_font.render("Sin procesos disponibles.", True, theme.WHITE),
-                (34, 128),
+                body_font.render("SIN PROCESOS DISPONIBLES.", False, theme.TEXT_COLOR),
+                (17, 64),
             )
-        surface.blit(small_font.render("A: ayuda    B: volver", True, theme.AMBER), (34, 380))
+        surface.blit(small_font.render("A: AYUDA    B: VOLVER", False, theme.ACCENT_COLOR), (17, 190))
 
     def footer_hints(self) -> list[tuple[str, int]]:
         """Return gamepad guidance for the process list or help page."""
-        return [("A AYUDA", 24), ("B MENU", 335)]
+        return [("A AYUDA", 12), ("B MENU", 168)]

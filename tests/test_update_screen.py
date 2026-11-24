@@ -4,6 +4,7 @@ import unittest
 
 import pygame
 
+from core import theme
 from core.input import BACK, OPEN
 from core.ui.update_screen import UpdateScreen
 
@@ -62,12 +63,12 @@ class UpdateScreenTests(unittest.TestCase):
         processes = FakeProcessManager()
         processes.output = "Recibiendo objetos..."
         pygame.font.init()
-        surface = pygame.Surface((640, 480))
+        surface = pygame.Surface((320, 240))
         screen.draw(
             surface,
-            pygame.font.Font(None, 16),
-            pygame.font.Font(None, 13),
-            pygame.font.Font(None, 9),
+            theme.load_font(16),
+            theme.load_font(8),
+            theme.load_font(8),
             processes,
             None,
         )
@@ -104,12 +105,12 @@ class UpdateScreenTests(unittest.TestCase):
         screen = UpdateScreen()
         self.assertEqual(
             screen.footer_hints(),
-            [("A ACTUALIZAR", 24), ("B VOLVER", 335)],
+            [("A ACTUALIZAR", 12), ("B VOLVER", 168)],
         )
         screen.phase = "running"
-        self.assertEqual(screen.footer_hints(), [("B CANCELAR", 24)])
+        self.assertEqual(screen.footer_hints(), [("B CANCELAR", 12)])
         screen.phase = "result"
-        self.assertEqual(screen.footer_hints(), [("A/B VOLVER", 24)])
+        self.assertEqual(screen.footer_hints(), [("A/B VOLVER", 12)])
 
 
 if __name__ == "__main__":

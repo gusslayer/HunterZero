@@ -91,7 +91,7 @@ class ParameterizedToolScreen:
         """Render the active parameter, help, confirmation, progress, or result view."""
         del stats
         if self.phase == "edit_target":
-            self.target.draw(surface, title_font, body_font, small_font)
+            self.target.draw(surface, body_font, body_font, small_font)
             return
         if self.phase == "help":
             draw_help_view(
@@ -103,29 +103,29 @@ class ParameterizedToolScreen:
                 self.help_sections,
             )
             return
-        pygame.draw.rect(surface, theme.BLACK, (0, 55, theme.WIDTH, 370))
-        surface.blit(title_font.render(self.title[:24], True, theme.ORANGE), (30, 72))
+        pygame.draw.rect(surface, theme.BG_COLOR, (0, 28, theme.WIDTH, 184))
+        surface.blit(title_font.render(self.title[:18], False, theme.ACCENT_COLOR), (15, 36))
         if self.phase == "settings":
             self._draw_settings(surface, body_font)
         elif self.phase == "confirm":
             self._draw_confirmation(surface, small_font)
         elif self.phase == "running":
-            surface.blit(body_font.render(f"{self.operation_label} EN CURSO", True, theme.WHITE), (30, 138))
-            surface.blit(small_font.render(f"Objetivo: {self.target.address}", True, theme.ORANGE), (30, 184))
+            surface.blit(body_font.render(f"{self.operation_label} EN CURSO", False, theme.TEXT_COLOR), (15, 69))
+            surface.blit(small_font.render(f"OBJETIVO: {self.target.address}", False, theme.ACCENT_COLOR), (15, 92))
         else:
             self._draw_result(surface, small_font, processes)
 
     def footer_hints(self) -> list[tuple[str, int]]:
         """Return button labels for the current tool screen state."""
         if self.phase == "edit_target":
-            return [("UP/DOWN DIGITO", 24), ("LEFT/RIGHT IP", 260), ("A GUARDAR", 480)]
+            return [("UP/DOWN DIGITO", 12), ("LEFT/RIGHT IP", 130), ("A GUARDAR", 240)]
         if self.phase == "confirm":
-            return [("A CONFIRMAR", 24), ("B CANCELAR", 335)]
+            return [("A CONFIRMAR", 12), ("B CANCELAR", 168)]
         if self.phase == "running":
-            return [("B CANCELAR", 24)]
+            return [("B CANCELAR", 12)]
         if self.phase in ("result", "help"):
-            return [("A OPCIONES", 24), ("B VOLVER", 335)]
-        return [("UP/DOWN MOVER", 24), ("LEFT/RIGHT AJUSTAR", 230), ("A ABRIR", 500)]
+            return [("A OPCIONES", 12), ("B VOLVER", 168)]
+        return [("UP/DOWN MOVER", 12), ("IZQ/DER AJUSTAR", 120), ("A ABRIR", 260)]
 
     def _handle_settings(self, action) -> bool:
         """Navigate target, parameter, operation, help, and exit rows."""
@@ -171,13 +171,13 @@ class ParameterizedToolScreen:
         """Draw selectable settings and expose the current parameter value."""
         values = (self.target.address, str(self.parameter), "", "", "")
         for index, label in enumerate(self.rows):
-            row = pygame.Rect(28, 118 + index * 54, 584, 46)
+            row = pygame.Rect(14, 58 + index * 28, 292, 24)
             selected = index == self.selected
-            pygame.draw.rect(surface, theme.ORANGE if selected else theme.BLACK, row, border_radius=4)
-            color = theme.BLACK if selected else theme.ORANGE
+            pygame.draw.rect(surface, theme.ACCENT_COLOR if selected else theme.BG_COLOR, row)
+            color = theme.BG_COLOR if selected else theme.TEXT_COLOR
             surface.blit(
-                font.render(f"{label}  {values[index]}".rstrip()[:31], True, color),
-                (row.x + 12, row.y + 12),
+                font.render(f"{label}  {values[index]}".rstrip()[:36], False, color),
+                (row.x + 6, row.y + 8),
             )
 
     def _draw_confirmation(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
@@ -189,8 +189,8 @@ class ParameterizedToolScreen:
             "A: ejecutar    B: cancelar",
         )
         for index, line in enumerate(lines):
-            color = theme.AMBER if index == len(lines) - 1 else theme.WHITE
-            surface.blit(font.render(line[:40], True, color), (30, 134 + index * 50))
+            color = theme.ACCENT_COLOR if index == len(lines) - 1 else theme.TEXT_COLOR
+            surface.blit(font.render(line[:36], False, color), (15, 66 + index * 22))
 
     def _draw_result(
         self,
@@ -199,6 +199,6 @@ class ParameterizedToolScreen:
         processes: ProcessManager,
     ) -> None:
         """Show bounded process status and captured output in the result view."""
-        surface.blit(font.render(processes.message[:40], True, theme.AMBER), (30, 124))
-        for index, line in enumerate(processes.output.splitlines()[-7:]):
-            surface.blit(font.render(line[:40], True, theme.WHITE), (30, 166 + index * 30))
+        surface.blit(font.render(processes.message[:36], False, theme.ACCENT_COLOR), (15, 62))
+        for index, line in enumerate(processes.output.splitlines()[-6:]):
+            surface.blit(font.render(line[:36], False, theme.TEXT_COLOR), (15, 84 + index * 18))

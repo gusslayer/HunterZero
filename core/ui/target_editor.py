@@ -83,35 +83,35 @@ class IPv4Editor:
         small_font: pygame.font.Font,
     ) -> None:
         """Draw four editable octets with the active digit highlighted."""
-        pygame.draw.rect(surface, theme.BLACK, (0, 55, theme.WIDTH, 370))
-        surface.blit(body_font.render("EDITAR IP", True, theme.ORANGE), (30, 88))
+        pygame.draw.rect(surface, theme.BG_COLOR, (0, 28, theme.WIDTH, 184))
+        surface.blit(body_font.render("EDITAR IP", False, theme.ACCENT_COLOR), (15, 44))
         for index in range(4):
-            group_x = 36 + index * 146
+            group_x = 18 + index * 72
             label = f"OCTETO {index + 1}"
-            color = theme.AMBER if index == self.selected_octet else theme.DIM_ORANGE
-            surface.blit(small_font.render(label, True, color), (group_x, 136))
+            color = theme.ACCENT_COLOR if index == self.selected_octet else theme.MUTED_COLOR
+            surface.blit(small_font.render(label, False, color), (group_x, 74))
             digits = f"{self.octets[index]:03d}"
             for digit_index, digit in enumerate(digits):
-                digit_x = group_x + digit_index * 24
+                digit_x = group_x + digit_index * 12
                 selected = index == self.selected_octet and digit_index == self.selected_digit
                 if selected:
-                    pygame.draw.rect(surface, theme.ORANGE, (digit_x - 2, 168, 26, 31))
+                    pygame.draw.rect(surface, theme.ACCENT_COLOR, (digit_x - 1, 90, 13, 16))
                 surface.blit(
-                    octet_font.render(digit, True, theme.BLACK if selected else theme.ORANGE),
-                    (digit_x, 170),
+                    octet_font.render(digit, False, theme.BG_COLOR if selected else theme.TEXT_COLOR),
+                    (digit_x, 92),
                 )
             if index < 3:
-                surface.blit(octet_font.render(".", True, theme.AMBER), (group_x + 76, 170))
-        surface.blit(body_font.render(f"IP: {self.address}", True, theme.WHITE), (30, 250))
+                surface.blit(octet_font.render(".", False, theme.ACCENT_COLOR), (group_x + 38, 92))
+        surface.blit(body_font.render(f"IP: {self.address}", False, theme.TEXT_COLOR), (15, 126))
         lines = (
-            f"OCTETO {self.selected_octet + 1}/4   DIGITO {self.selected_digit + 1}/3",
-            "UP/DOWN digito   LEFT/RIGHT mover",
-            "A guardar   B cancelar   0-255",
+            f"OCTETO {self.selected_octet + 1}/4 DIGITO {self.selected_digit + 1}/3",
+            "UP/DOWN DIGITO LEFT/RIGHT MOVER",
+            "A GUARDAR  B CANCELAR  0-255",
         )
         for row, line in enumerate(lines):
-            surface.blit(small_font.render(line, True, theme.WHITE), (30, 292 + row * 28))
+            surface.blit(small_font.render(line, False, theme.TEXT_COLOR), (15, 146 + row * 14))
         if self.notice:
-            surface.blit(small_font.render(self.notice, True, theme.AMBER), (30, 382))
+            surface.blit(small_font.render(self.notice, False, theme.ACCENT_COLOR), (15, 194))
 
 
 # Nombre anterior conservado para no romper importaciones existentes.

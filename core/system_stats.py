@@ -100,8 +100,14 @@ class StatsReader:
         """Read the current HUD metrics from procfs, sysfs, and the network."""
         now = time.monotonic()
         if self._network_cache is None or now - self._network_read_at >= NETWORK_REFRESH_SECONDS:
+            previous = self._network_cache
             self._network_cache = (local_ip_address(), wireless_ssid())
-            self._network_read_at = now
+            if previous is not None and self._network_cache == previous:
+                # Sin cambios: el valor ya es el mismo, así que espera más
+                # tiempo antes de repetir el sondeo de subprocesos.
+                self._network_read_at = now + NETWORK_REFRESH_SECONDS * 3
+            else:
+                self._network_read_at = now
         local_ip, ssid = self._network_cache
         return SystemStats(
             cpu_percent=self._cpu_percent(),

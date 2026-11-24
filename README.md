@@ -7,7 +7,7 @@
        \/            \/          \/               \/   \/               
 ```         
 
-Interfaz modular para GPi Case 2W y Raspberry Pi Zero W, con Pygame, navegación por gamepad y estética retro. La resolución base es 640x480; los iconos se dibujan localmente y la tipografía Press Start 2P se distribuye bajo SIL Open Font License.
+Interfaz modular para GPi Case 2W y Raspberry Pi Zero W, con Pygame, navegación por gamepad y estética pixel art de alto contraste. Toda la interfaz se dibuja en un lienzo virtual de 320x240 y se escala 2x con nearest-neighbor a 640x480; usa negro, blanco y naranja, sin suavizado de tipografía. La fuente Press Start 2P se distribuye bajo SIL Open Font License.
 
 > Ping y Nmap son módulos independientes con opciones, validación y comandos propios; comparten únicamente la vista de configuración/ayuda y el editor IPv4. El destino se ingresa octeto por octeto con el D-pad. Ping envía 1–4 paquetes; Nmap usa TCP Connect, 20/50/100 puertos comunes y scripts NSE de la categoría vuln. Solo se aceptan IPv4 privadas y cada ejecución solicita confirmación. El Monitor del Sistema muestra métricas locales. No se incluyen módulos vacíos ni una terminal de comandos.
 
@@ -118,7 +118,7 @@ Comando: `cp config/settings.example.json config/settings.json`.
 | Cancelar/volver (en el menú principal no cierra la app) | B |
 | Abrir módulo; dentro de uno equivale a A | START |
 
-El menú muestra CPU, memoria, temperatura, estado de Wi-Fi, batería (si el kernel la expone) y hora. Las métricas se refrescan cada 2 segundos. La aplicación escribe `state/heartbeats/app.json` cada 5 segundos. El Monitor de Procesos calcula el %CPU entre lecturas sucesivas de `/proc` (no un promedio desde el arranque) y actualiza la lista una vez por segundo. Nmap usa el máximo de 180 s permitido por el lanzador.
+El menú muestra CPU, memoria, temperatura, estado de Wi-Fi, batería (si el kernel la expone) y hora. Las métricas se refrescan cada 5 segundos. La aplicación escribe `state/heartbeats/app.json` cada 5 segundos. El Monitor de Procesos calcula el %CPU entre lecturas sucesivas de `/proc` (no un promedio desde el arranque) y actualiza la lista una vez por segundo. Nmap usa el máximo de 180 s permitido por el lanzador.
 
 La interfaz es de quiosco: no se cierra con B ni con un evento `SDL_QUIT` del cambio de consola/VT; solo termina si systemd detiene el servicio. Los eventos de botones que estaban pulsados durante el arranque se descartan para no entrar en un módulo por accidente. `create_display()` oculta el cursor de SDL justo después de crear la ventana, porque KMSDRM lo dibuja en un plane ajeno al surface de Pygame. La tipografía usa 20/16/12 px (título/cuerpo/detalle) para que los datos se lean en la pantalla de 640x480; los textos largos se recortan al ancho disponible.
 

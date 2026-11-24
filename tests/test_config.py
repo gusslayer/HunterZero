@@ -14,7 +14,7 @@ class AppSettingsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             settings = AppSettings.load(Path(temporary) / "missing.json")
 
-        self.assertEqual(settings.stats_interval_seconds, 2)
+        self.assertEqual(settings.stats_interval_seconds, 5)
         self.assertEqual(settings.heartbeat_interval_seconds, 5)
 
     def test_rejects_out_of_range_interval(self):

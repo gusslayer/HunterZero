@@ -61,8 +61,8 @@ class UpdateScreen:
     ) -> None:
         """Render the confirmation, running progress, or result view of the update."""
         del stats
-        pygame.draw.rect(surface, theme.BLACK, (0, 55, theme.WIDTH, 370))
-        surface.blit(title_font.render(self.title, True, theme.ORANGE), (30, 72))
+        pygame.draw.rect(surface, theme.BG_COLOR, (0, 28, theme.WIDTH, 184))
+        surface.blit(title_font.render(self.title[:18], False, theme.ACCENT_COLOR), (15, 36))
         if self.phase == "confirm":
             lines = (
                 "Descarga el codigo con git pull --ff-only.",
@@ -70,37 +70,37 @@ class UpdateScreen:
                 "A: actualizar    B: volver",
             )
             for index, line in enumerate(lines):
-                surface.blit(small_font.render(line[:40], True, theme.WHITE), (30, 132 + index * 38))
+                surface.blit(small_font.render(line[:36], False, theme.TEXT_COLOR), (15, 66 + index * 20))
         elif self.phase == "running":
             elapsed = max(0, int(time.monotonic() - self.started_at)) if self.started_at else 0
             dots = "." * (elapsed % 4)
             surface.blit(
-                body_font.render(f"ACTUALIZANDO{dots}", True, theme.WHITE), (30, 118)
+                body_font.render(f"ACTUALIZANDO{dots}", False, theme.TEXT_COLOR), (15, 59)
             )
             surface.blit(
-                small_font.render(f"Esperando git: {elapsed}s (max. 180s)", True, theme.ORANGE),
-                (30, 156),
+                small_font.render(f"Esperando git: {elapsed}s (max. 180s)", False, theme.ACCENT_COLOR),
+                (15, 78),
             )
             for index, line in enumerate(processes.output.splitlines()[-3:]):
-                surface.blit(small_font.render(line[:40], True, theme.WHITE), (30, 196 + index * 26))
+                surface.blit(small_font.render(line[:36], False, theme.TEXT_COLOR), (15, 98 + index * 16))
             self._draw_progress(surface)
-            surface.blit(small_font.render("B cancela la descarga.", True, theme.AMBER), (30, 380))
+            surface.blit(small_font.render("B CANCELA LA DESCARGA.", False, theme.ACCENT_COLOR), (15, 194))
         else:
             lines = (processes.message[:40], *processes.output.splitlines()[-6:])
             for index, line in enumerate(lines):
-                color = theme.AMBER if index == 0 else theme.WHITE
-                surface.blit(small_font.render(line[:40], True, color), (30, 124 + index * 30))
+                color = theme.ACCENT_COLOR if index == 0 else theme.TEXT_COLOR
+                surface.blit(small_font.render(line[:36], False, color), (15, 62 + index * 18))
 
     def _draw_progress(self, surface: pygame.Surface) -> None:
-        """Draw a smooth indeterminate marker because git reports no percentage."""
-        pygame.draw.rect(surface, theme.DIM_ORANGE, (30, 330, 580, 14))
-        position = 30 + int((self.activity * 140) % 540)
-        pygame.draw.rect(surface, theme.ORANGE, (position, 330, 40, 14))
+        """Draw a hard-edged indeterminate marker because git reports no percentage."""
+        pygame.draw.rect(surface, theme.MUTED_COLOR, (15, 165, 290, 7))
+        position = 15 + int((self.activity * 70) % 270)
+        pygame.draw.rect(surface, theme.ACCENT_COLOR, (position, 165, 20, 7))
 
     def footer_hints(self) -> list[tuple[str, int]]:
         """Return button labels for the current update-screen state."""
         if self.phase == "confirm":
-            return [("A ACTUALIZAR", 24), ("B VOLVER", 335)]
+            return [("A ACTUALIZAR", 12), ("B VOLVER", 168)]
         if self.phase == "running":
-            return [("B CANCELAR", 24)]
-        return [("A/B VOLVER", 24)]
+            return [("B CANCELAR", 12)]
+        return [("A/B VOLVER", 12)]

@@ -5,7 +5,7 @@ from pathlib import Path
 
 @dataclass(frozen=True)
 class AppSettings:
-    stats_interval_seconds: int = 2
+    stats_interval_seconds: int = 5
     heartbeat_interval_seconds: int = 5
 
     @classmethod

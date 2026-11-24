@@ -4,20 +4,22 @@ import pygame
 
 
 ROOT = Path(__file__).resolve().parents[1]
-WIDTH = 640
-HEIGHT = 480
-FPS = 30
+WIDTH = 320
+HEIGHT = 240
+WINDOW_WIDTH = 640
+WINDOW_HEIGHT = 480
+FPS = 15
 
-BLACK = (8, 8, 8)
-ORANGE = (255, 140, 0)
-AMBER = (255, 166, 35)
-DIM_ORANGE = (150, 78, 0)
-WHITE = (244, 230, 211)
-PANEL = (18, 15, 11)
+BG_COLOR = (0, 0, 0)
+TEXT_COLOR = (255, 255, 255)
+ACCENT_COLOR = (255, 85, 0)
+MUTED_COLOR = (102, 102, 102)
 
 
 def load_font(size: int) -> pygame.font.Font:
     """Load the bundled, freely licensed Press Start 2P font."""
+    if size <= 0 or size % 8:
+        raise ValueError("El tamaño de fuente debe ser un múltiplo positivo de 8.")
     font_path = ROOT / "assets" / "fonts" / "PressStart2P-Regular.ttf"
     if not font_path.is_file():
         raise FileNotFoundError(f"Falta la fuente requerida: {font_path}")

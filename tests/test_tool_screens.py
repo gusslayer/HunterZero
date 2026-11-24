@@ -5,6 +5,7 @@ import unittest
 import pygame
 
 from core.input import BACK, DOWN, LEFT, OPEN, RIGHT, UP
+from core import theme
 from core.ui.icons import load_icon
 from modules.nmap.screen import NmapScreen
 from modules.ping.screen import PingScreen
@@ -37,6 +38,13 @@ class FakeProcessManager:
 
 class ToolScreenTests(unittest.TestCase):
     """Exercise manual target entry and confirmation for each independent tool."""
+
+    def test_font_sizes_are_pixel_grid_multiples(self):
+        """Reject font sizes that would break the pixel-art grid."""
+        pygame.font.init()
+        with self.assertRaises(ValueError):
+            theme.load_font(12)
+        self.assertGreater(theme.load_font(8).get_height(), 0)
 
     def test_menu_icon_assets_exist_and_load(self):
         """Require every manifest icon name to have a usable PNG asset."""
@@ -162,12 +170,12 @@ class ToolScreenTests(unittest.TestCase):
         self.assertEqual(nmap.parameter, 50)
 
     def test_screens_render_without_a_window_or_keyboard(self):
-        """Render each screen to an in-memory GPi-sized surface."""
+        """Render each screen to the in-memory 320x240 virtual surface."""
         pygame.init()
-        surface = pygame.Surface((640, 480))
-        title_font = pygame.font.Font(None, 18)
-        body_font = pygame.font.Font(None, 14)
-        small_font = pygame.font.Font(None, 12)
+        surface = pygame.Surface((320, 240))
+        title_font = theme.load_font(16)
+        body_font = theme.load_font(8)
+        small_font = theme.load_font(8)
         processes = FakeProcessManager()
 
         stats = StatsReader().read()
@@ -178,5 +186,5 @@ class ToolScreenTests(unittest.TestCase):
         monitor.handle(OPEN, processes)
         monitor.draw(surface, title_font, body_font, small_font, processes, stats)
 
-        self.assertEqual(surface.get_size(), (640, 480))
+        self.assertEqual(surface.get_size(), (320, 240))
         pygame.quit()

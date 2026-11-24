@@ -14,24 +14,24 @@ def draw_help_view(
     sections: tuple[tuple[str, tuple[str, ...]], ...],
 ) -> None:
     """Render titled help sections with wrapped text and common button guidance."""
-    pygame.draw.rect(surface, theme.BLACK, (0, 55, theme.WIDTH, 370))
-    surface.blit(title_font.render(title[:23], True, theme.ORANGE), (28, 72))
-    y = 118
+    pygame.draw.rect(surface, theme.BG_COLOR, (0, 28, theme.WIDTH, 184))
+    surface.blit(title_font.render(title[:18], False, theme.ACCENT_COLOR), (14, 36))
+    y = 62
     for heading, paragraphs in sections:
-        if y >= 350:
+        if y >= 175:
             break
-        surface.blit(body_font.render(heading[:30], True, theme.AMBER), (30, y))
-        y += body_font.get_linesize() + 8
+        surface.blit(body_font.render(heading[:30], False, theme.ACCENT_COLOR), (15, y))
+        y += body_font.get_linesize() + 4
         for paragraph in paragraphs:
-            for line in _wrap_text(paragraph, small_font, 570):
-                if y >= 356:
+            for line in _wrap_text(paragraph, small_font, 285):
+                if y >= 178:
                     break
-                surface.blit(small_font.render(line, True, theme.WHITE), (30, y))
-                y += small_font.get_linesize() + 6
-            y += 4
+                surface.blit(small_font.render(line, False, theme.TEXT_COLOR), (15, y))
+                y += small_font.get_linesize() + 3
+            y += 2
     surface.blit(
-        small_font.render("A: volver    B: salir", True, theme.ORANGE),
-        (30, 388),
+        small_font.render("A: volver    B: salir", False, theme.ACCENT_COLOR),
+        (15, 194),
     )
 
 

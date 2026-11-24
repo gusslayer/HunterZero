@@ -48,7 +48,7 @@ class ProcessSampler:
         self._previous_ticks: dict[int, float] = {}
         self._previous_time: float | None = None
 
-    def snapshot(self, limit: int = 7) -> tuple[ProcessSnapshot, ...]:
+    def snapshot(self, limit: int = 12) -> tuple[ProcessSnapshot, ...]:
         """Sample procfs and return up to `limit` processes sorted by current CPU use."""
         now = time.monotonic()
         raw_processes = _read_raw_processes()
