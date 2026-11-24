@@ -21,6 +21,7 @@ class SystemStats:
     wifi_connected: bool
     local_ip: str
     ssid: str | None
+    battery_charging: bool = False
 
 
 def local_ip_address() -> str:
@@ -118,6 +119,7 @@ class StatsReader:
             wifi_connected=self._wifi_connected(),
             local_ip=local_ip,
             ssid=ssid,
+            battery_charging=self._battery_charging(),
         )
 
     @staticmethod
@@ -181,6 +183,16 @@ class StatsReader:
             except (OSError, ValueError):
                 continue
         return None
+
+    @staticmethod
+    def _battery_charging() -> bool:
+        """Return whether the power supply reports an active charging state."""
+        for status in Path("/sys/class/power_supply").glob("*/status"):
+            try:
+                return status.read_text(encoding="ascii").strip() == "Charging"
+            except OSError:
+                continue
+        return False
 
 
 def heartbeat_payload() -> dict[str, object]:

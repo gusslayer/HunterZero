@@ -43,6 +43,19 @@ def _hide_mouse_cursor() -> None:
     pygame.mouse.set_visible(False)
 
 
+def _draw_right_arrow(surface: pygame.Surface, rect: pygame.Rect, color) -> None:
+    """Draw a filled triangular arrow pointing right inside the given rect."""
+    pygame.draw.polygon(
+        surface,
+        color,
+        [
+            (rect.x, rect.y),
+            (rect.right, rect.center_y),
+            (rect.x, rect.bottom),
+        ],
+    )
+
+
 class HunterZeroApp:
     """Own the event loop, screen state, and shared diagnostic services."""
 
@@ -262,8 +275,7 @@ class HunterZeroApp:
             )
             label = render_cached(self.body_font, plugin.name, foreground)
             self.virtual_screen.blit(label, (row.x + 38, row.y + 8))
-            arrow = render_cached(self.body_font, ">", foreground)
-            self.virtual_screen.blit(arrow, (row.right - 12, row.y + 8))
+            _draw_right_arrow(self.virtual_screen, pygame.Rect(row.right - 13, row.y + 3, 9, 18), foreground)
         if self.catalog.errors:
             self._draw_text("AVISO: revisa logs/app.log", 15, 196, self.small_font, theme.ACCENT_COLOR)
         if self.processes.message:

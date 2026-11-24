@@ -23,12 +23,18 @@ class ParameterizedToolScreen:
         initial_parameter: int,
         operation_label: str,
         help_sections: tuple[tuple[str, tuple[str, ...]], ...],
-        command_builder: Callable[[str, int], list[str]],
+        command_builder: Callable[[str, int, str | None], list[str]],
         timeout_seconds: Callable[[int], int],
+        *,
+        option_label: str = "",
+        option_values: tuple[str, ...] = (),
+        initial_option: int = 0,
     ) -> None:
         """Initialize a tool screen from the module's validated options and help."""
         if not parameter_values or initial_parameter not in parameter_values:
             raise ValueError("El parámetro inicial debe pertenecer a sus opciones permitidas.")
+        if option_values and not (0 <= initial_option < len(option_values)):
+            raise ValueError("La opción inicial debe pertenecer a sus opciones permitidas.")
         self.title = title
         self.parameter_label = parameter_label
         self.parameter_values = parameter_values
@@ -37,10 +43,16 @@ class ParameterizedToolScreen:
         self.help_sections = help_sections
         self.command_builder = command_builder
         self.timeout_for_parameter = timeout_seconds
+        self.option_label = option_label
+        self.option_values = option_values
+        self.option = initial_option
         self.target = IPv4Editor()
         self.phase = "settings"
         self.selected = 0
-        self.rows = ("IP DESTINO", parameter_label, operation_label, "AYUDA", "VOLVER")
+        if option_values:
+            self.rows = ("IP DESTINO", parameter_label, operation_label, option_label, "AYUDA", "VOLVER")
+        else:
+            self.rows = ("IP DESTINO", parameter_label, operation_label, "AYUDA", "VOLVER")
 
     def handle(self, action, processes: ProcessManager) -> bool:
         """Handle D-pad/A/B input and return true when the user exits the tool."""
@@ -104,14 +116,14 @@ class ParameterizedToolScreen:
             )
             return
         pygame.draw.rect(surface, theme.BG_COLOR, (0, 28, theme.WIDTH, 184))
-        surface.blit(title_font.render(self.title[:18], False, theme.ACCENT_COLOR), (15, 36))
+        del title_font
         if self.phase == "settings":
             self._draw_settings(surface, body_font)
         elif self.phase == "confirm":
             self._draw_confirmation(surface, small_font)
         elif self.phase == "running":
-            surface.blit(body_font.render(f"{self.operation_label} EN CURSO", False, theme.TEXT_COLOR), (15, 69))
-            surface.blit(small_font.render(f"OBJETIVO: {self.target.address}", False, theme.ACCENT_COLOR), (15, 92))
+            surface.blit(body_font.render(f"{self.operation_label} EN CURSO", False, theme.TEXT_COLOR), (15, 52))
+            surface.blit(small_font.render(f"OBJETIVO: {self.target.address}", False, theme.ACCENT_COLOR), (15, 72))
         else:
             self._draw_result(surface, small_font, processes)
 
@@ -128,7 +140,7 @@ class ParameterizedToolScreen:
         return [("UP/DOWN MOVER", 12), ("IZQ/DER AJUSTAR", 120), ("A ABRIR", 260)]
 
     def _handle_settings(self, action) -> bool:
-        """Navigate target, parameter, operation, help, and exit rows."""
+        """Navigate target, parameter, option, operation, help, and exit rows."""
         if action == UP:
             self.selected = (self.selected - 1) % len(self.rows)
         elif action == DOWN:
@@ -137,24 +149,41 @@ class ParameterizedToolScreen:
             step = 1 if action == RIGHT else -1
             index = self.parameter_values.index(self.parameter)
             self.parameter = self.parameter_values[(index + step) % len(self.parameter_values)]
+        elif action in (LEFT, RIGHT) and self.option_values and self.selected == 3:
+            step = 1 if action == RIGHT else -1
+            self.option = (self.option + step) % len(self.option_values)
         elif action == OPEN:
             if self.selected == 0:
                 self.target.begin()
                 self.phase = "edit_target"
             elif self.selected == 2:
                 self.phase = "confirm"
-            elif self.selected == 3:
+            elif self.selected == self._help_row():
                 self.phase = "help"
-            elif self.selected == 4:
+            elif self.selected == self._back_row():
                 return True
         elif action == BACK:
             return True
         return False
 
+    def _option_value(self) -> str | None:
+        """Return the selected extra option value, or None when there is no option row."""
+        if not self.option_values:
+            return None
+        return self.option_values[self.option]
+
+    def _help_row(self) -> int:
+        """Return the help row index for the current rows layout."""
+        return len(self.rows) - 2
+
+    def _back_row(self) -> int:
+        """Return the exit row index for the current rows layout."""
+        return len(self.rows) - 1
+
     def _start_command(self, processes: ProcessManager) -> None:
         """Build the module-provided safe argv and start it through the allowlist."""
         try:
-            command = self.command_builder(self.target.address, self.parameter)
+            command = self.command_builder(self.target.address, self.parameter, self._option_value())
             timeout = self.timeout_for_parameter(self.parameter)
         except ValueError as error:
             processes.message = str(error)
@@ -168,29 +197,38 @@ class ParameterizedToolScreen:
         )
 
     def _draw_settings(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
-        """Draw selectable settings and expose the current parameter value."""
-        values = (self.target.address, str(self.parameter), "", "", "")
+        """Draw selectable settings and expose the current parameter and option."""
+        values = [self.target.address, str(self.parameter)]
+        if self.option_values:
+            values.append(self._option_value())
+        values.extend(("",) * (len(self.rows) - len(values)))
         for index, label in enumerate(self.rows):
-            row = pygame.Rect(14, 58 + index * 28, 292, 24)
+            row = pygame.Rect(14, 36 + index * 18, 292, 20)
             selected = index == self.selected
             pygame.draw.rect(surface, theme.ACCENT_COLOR if selected else theme.BG_COLOR, row)
             color = theme.BG_COLOR if selected else theme.TEXT_COLOR
             surface.blit(
                 font.render(f"{label}  {values[index]}".rstrip()[:36], False, color),
-                (row.x + 6, row.y + 8),
+                (row.x + 6, row.y + 6),
             )
 
     def _draw_confirmation(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
         """Show target and selected parameter before requiring explicit approval."""
-        lines = (
+        lines = [
             f"Destino: {self.target.address}",
             f"{self.parameter_label}: {self.parameter}",
-            "Solo equipos propios o autorizados.",
-            "A: ejecutar    B: cancelar",
+        ]
+        if self.option_values:
+            lines.append(f"{self.option_label}: {self._option_value()}")
+        lines.extend(
+            (
+                "Solo equipos propios o autorizados.",
+                "A: ejecutar    B: cancelar",
+            )
         )
         for index, line in enumerate(lines):
             color = theme.ACCENT_COLOR if index == len(lines) - 1 else theme.TEXT_COLOR
-            surface.blit(font.render(line[:36], False, color), (15, 66 + index * 22))
+            surface.blit(font.render(line[:36], False, color), (15, 44 + index * 16))
 
     def _draw_result(
         self,
@@ -199,6 +237,6 @@ class ParameterizedToolScreen:
         processes: ProcessManager,
     ) -> None:
         """Show bounded process status and captured output in the result view."""
-        surface.blit(font.render(processes.message[:36], False, theme.ACCENT_COLOR), (15, 62))
+        surface.blit(font.render(processes.message[:36], False, theme.ACCENT_COLOR), (15, 52))
         for index, line in enumerate(processes.output.splitlines()[-6:]):
-            surface.blit(font.render(line[:36], False, theme.TEXT_COLOR), (15, 84 + index * 18))
+            surface.blit(font.render(line[:36], False, theme.TEXT_COLOR), (15, 66 + index * 14))

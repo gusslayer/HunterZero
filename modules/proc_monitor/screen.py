@@ -52,11 +52,10 @@ class ProcMonitorScreen:
         del processes
         del stats
         pygame.draw.rect(surface, theme.BG_COLOR, (0, 28, theme.WIDTH, 184))
-        surface.blit(title_font.render("MONITOR PROCESOS", False, theme.ACCENT_COLOR), (15, 36))
         if self.show_help:
             draw_help_view(
                 surface,
-                title_font,
+                body_font,
                 body_font,
                 small_font,
                 "AYUDA PROCESOS",
@@ -74,10 +73,10 @@ class ProcMonitorScreen:
             return
         if self.processes:
             surface.blit(
-                body_font.render("PID %CPU %MEM HRA", False, theme.MUTED_COLOR), (17, 58)
+                body_font.render("PID %CPU %MEM HRA", False, theme.MUTED_COLOR), (17, 38)
             )
-            for index, snap in enumerate(self.processes):
-                y = 70 + index * 16
+            y = 50
+            for snap in self.processes:
                 if y + body_font.get_height() >= 212:
                     break
                 line = (
@@ -85,12 +84,12 @@ class ProcMonitorScreen:
                     f"{snap.memory_percent:3.0f}% {snap.elapsed[:4]}"
                 )
                 surface.blit(body_font.render(line, False, theme.TEXT_COLOR), (17, y))
+                y += 14
         else:
             surface.blit(
                 body_font.render("SIN PROCESOS DISPONIBLES.", False, theme.TEXT_COLOR),
-                (17, 64),
+                (17, 50),
             )
-        surface.blit(small_font.render("A: AYUDA    B: VOLVER", False, theme.ACCENT_COLOR), (17, 190))
 
     def footer_hints(self) -> list[tuple[str, int]]:
         """Return gamepad guidance for the process list or help page."""

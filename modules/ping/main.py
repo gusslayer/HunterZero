@@ -18,8 +18,9 @@ def validate_target(target: str) -> str:
     return str(address)
 
 
-def build_ping_command(target: str, packet_count: int = 2) -> list[str]:
-    """Build a bounded ping command for one manually entered IPv4 address."""
+def build_ping_command(target: str, packet_count: int = 2, script: str | None = None) -> list[str]:
+    """Build a bounded ping command; the script option is unused by this module."""
+    del script
     address = validate_target(target)
     if packet_count not in PACKET_COUNTS:
         raise ValueError(f"El número de paquetes debe ser uno de {PACKET_COUNTS}.")

@@ -3,7 +3,7 @@
 # Mantiene toda la configuración visual y de ayuda dentro del módulo Nmap.
 from core.process_manager import MAX_COMMAND_TIMEOUT_SECONDS
 from core.ui.parameterized_tool_screen import ParameterizedToolScreen
-from modules.nmap.main import PORT_COUNTS, build_nmap_command
+from modules.nmap.main import PORT_COUNTS, SCRIPT_OPTIONS, build_nmap_command
 
 
 class NmapScreen(ParameterizedToolScreen):
@@ -17,6 +17,9 @@ class NmapScreen(ParameterizedToolScreen):
             parameter_values=PORT_COUNTS,
             initial_parameter=20,
             operation_label="INICIAR NMAP",
+            option_label="SCRIPTS NSE",
+            option_values=SCRIPT_OPTIONS,
+            initial_option=0,
             help_sections=(
                 (
                     "CONFIGURAR",

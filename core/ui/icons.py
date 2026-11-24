@@ -41,8 +41,8 @@ def draw_icon(surface: pygame.Surface, name: str, rect: pygame.Rect, color: tupl
     key = (name, visible.w, visible.h, color)
     tinted = _scaled_icon_cache.get(key)
     if tinted is None:
-        # transform.scale es el escalado sin suavizado: un píxel por píxel.
-        tinted = pygame.transform.scale(icon, (visible.w, visible.h))
+        # smoothscale suaviza el escalado para que los iconos no pierdan forma.
+        tinted = pygame.transform.smoothscale(icon, (visible.w, visible.h))
         tinted.fill(color, special_flags=pygame.BLEND_RGB_MULT)
         _scaled_icon_cache[key] = tinted
     surface.blit(tinted, visible)

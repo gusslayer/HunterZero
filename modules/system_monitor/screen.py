@@ -70,7 +70,6 @@ class SystemMonitorScreen:
             )
             return
         pygame.draw.rect(surface, theme.BG_COLOR, (0, 28, theme.WIDTH, 184))
-        surface.blit(title_font.render("MONITOR SISTEMA", False, theme.ACCENT_COLOR), (15, 36))
         temperature = f"{stats.temperature_c} C" if stats.temperature_c is not None else "N/D"
         battery = f"{stats.battery_percent}%" if stats.battery_percent is not None else "N/D"
         values = (
@@ -85,8 +84,7 @@ class SystemMonitorScreen:
             f"HORA: {stats.clock}",
         )
         for index, value in enumerate(values):
-            surface.blit(body_font.render(value[:36], False, theme.TEXT_COLOR), (17, 56 + index * 14))
-        surface.blit(small_font.render("A: AYUDA    B: VOLVER", False, theme.ACCENT_COLOR), (17, 190))
+            surface.blit(body_font.render(value[:36], False, theme.TEXT_COLOR), (17, 52 + index * 12))
 
     def footer_hints(self) -> list[tuple[str, int]]:
         """Return gamepad guidance for the monitor dashboard or help page."""

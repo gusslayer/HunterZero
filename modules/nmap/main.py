@@ -5,6 +5,7 @@ import ipaddress
 
 
 PORT_COUNTS = (20, 50, 100)
+SCRIPT_OPTIONS = ("vuln", "ninguno")
 
 
 def validate_target(target: str) -> str:
@@ -18,12 +19,12 @@ def validate_target(target: str) -> str:
     return str(address)
 
 
-def build_nmap_command(target: str, port_count: int = 20) -> list[str]:
-    """Build a slow, unprivileged TCP-connect scan with NSE vuln scripts."""
+def build_nmap_command(target: str, port_count: int = 20, script: str | None = None) -> list[str]:
+    """Build a slow, unprivileged TCP-connect scan with the chosen NSE scripts."""
     normalized_target = validate_target(target)
     if port_count not in PORT_COUNTS:
         raise ValueError(f"Los puertos deben ser uno de {PORT_COUNTS}.")
-    return [
+    command = [
         "nmap",
         "-n",
         "-Pn",
@@ -34,7 +35,7 @@ def build_nmap_command(target: str, port_count: int = 20) -> list[str]:
         "--open",
         "--host-timeout",
         "90s",
-        "--script",
-        "vuln",
-        normalized_target,
     ]
+    if script == "ninguno":
+        return command + [normalized_target]
+    return command + ["--script", "vuln", normalized_target]
