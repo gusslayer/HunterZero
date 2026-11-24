@@ -1,6 +1,8 @@
 """Independent system-monitor view using shared layout and help components."""
 
 # Lee métricas locales preparadas por core; no ejecuta procesos externos.
+import time
+
 import pygame
 
 from core import theme
@@ -16,6 +18,8 @@ class SystemMonitorScreen:
     def __init__(self) -> None:
         """Start the monitor on its dashboard with its reusable help closed."""
         self.show_help = False
+        self.disk_percent = disk_usage_percent(theme.ROOT)
+        self.last_disk_refresh = time.monotonic()
 
     def handle(self, action, processes: ProcessManager) -> bool:
         """Toggle help with A or leave the monitor with B."""
@@ -27,8 +31,13 @@ class SystemMonitorScreen:
         return False
 
     def sync(self, processes: ProcessManager) -> None:
-        """Implement the common screen contract; telemetry is read by the app."""
+        """Refresh the disk reading every two seconds instead of every frame."""
         del processes
+        now = time.monotonic()
+        if now - self.last_disk_refresh < 2.0:
+            return
+        self.last_disk_refresh = now
+        self.disk_percent = disk_usage_percent(theme.ROOT)
 
     def draw(
         self,
@@ -67,7 +76,7 @@ class SystemMonitorScreen:
         values = (
             f"CPU: {stats.cpu_percent}%",
             f"RAM: {stats.memory_percent}%",
-            f"DISK: {disk_usage_percent(theme.ROOT)}%",
+            f"DISK: {self.disk_percent}%",
             f"TEMPERATURA: {temperature}",
             f"WI-FI: {'CONECTADO' if stats.wifi_connected else 'NO DISPONIBLE'}",
             f"BATERIA: {battery}",

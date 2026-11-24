@@ -3,8 +3,8 @@
 import unittest
 from unittest.mock import patch
 
-from core.app import HunterZeroApp
-from core.input import QUIT
+from core.app import HunterZeroApp, _hide_mouse_cursor
+from core.input import OPEN, QUIT, RUN
 
 
 class FakeMenu:
@@ -21,8 +21,49 @@ class FakeMenu:
         self.back_calls += 1
 
 
+class FakeProcesses:
+    """Minimal process manager that records cancellation requests."""
+
+    def __init__(self) -> None:
+        """Start with no cancellation recorded."""
+        self.stopped = False
+
+    def stop(self) -> None:
+        """Record that running child processes were stopped."""
+        self.stopped = True
+
+
+class FakeToolScreen:
+    """Minimal module screen that records the actions it receives."""
+
+    def __init__(self) -> None:
+        """Start with an empty action history."""
+        self.actions = []
+
+    def handle(self, action, processes) -> bool:
+        """Record one action and keep the module open."""
+        del processes
+        self.actions.append(action)
+        return False
+
+
 class AppLifecycleTests(unittest.TestCase):
     """Guard the event paths that could blank the GPi framebuffer."""
+
+    def test_sdl_cursor_is_hidden(self):
+        """Disable SDL's mouse cursor so no pointer is drawn over the UI."""
+        with patch("core.app.pygame.mouse.set_visible") as set_visible:
+            _hide_mouse_cursor()
+        set_visible.assert_called_once_with(False)
+
+    def test_start_inside_a_module_confirms_like_a(self):
+        """Forward START as OPEN so module screens are not dead ends."""
+        app = object.__new__(HunterZeroApp)
+        app.menu = FakeMenu()
+        app.tool_screen = FakeToolScreen()
+        app.processes = object()
+        app._handle_plugin_action(RUN)
+        self.assertEqual(app.tool_screen.actions, [OPEN])
 
     def test_sdl_quit_returns_to_menu_without_stopping_the_app(self):
         """Treat SDL_QUIT as navigation back, never as an application exit."""
@@ -30,6 +71,7 @@ class AppLifecycleTests(unittest.TestCase):
         app.running = True
         app.menu = FakeMenu()
         app.tool_screen = object()
+        app.processes = FakeProcesses()
         with patch("core.app.pygame.event.get", return_value=[object()]), patch(
             "core.app.action_from_event", return_value=QUIT
         ):
@@ -37,6 +79,7 @@ class AppLifecycleTests(unittest.TestCase):
         self.assertTrue(app.running)
         self.assertIsNone(app.tool_screen)
         self.assertEqual(app.menu.back_calls, 1)
+        self.assertTrue(app.processes.stopped)
 
 
 if __name__ == "__main__":

@@ -53,7 +53,7 @@ marcadores vacíos ni una terminal genérica en el menú.
 | D-pad izquierda/derecha | Cambiar octeto o una opción |
 | A | Abrir, guardar o confirmar |
 | B | Cancelar/volver; en el menú principal no cierra la interfaz para no dejar el framebuffer en blanco |
-| START | Abrir el módulo seleccionado |
+| START | Abrir el módulo seleccionado; dentro de uno equivale a A |
 
 El menú principal lista los módulos; su última fila es **ACTUALIZAR HUNTERZERO**
 (icono `rotate-cw`). Abrirla muestra la pantalla de actualización: A ejecuta
@@ -63,9 +63,12 @@ la ejecución lo cancela.
 La app es de quiosco: `pygame.QUIT` (SDL lo emite al cambiar de VT/consola) se
 traduce como "volver al menú", nunca como salida del proceso; `self.running`
 solo lo detiene una señal externa. Al arrancar se llama a `pygame.event.clear()`
-para descartar pulsaciones mantenidas durante el boot. Las fuentes son
-20/16/12 px y los textos se recortan al ancho útil de 640 px, ajustando también
-posiciones y separadores del HUD para que no se solapen.
+para descartar pulsaciones mantenidas durante el boot. `create_display()` llama
+a `pygame.mouse.set_visible(False)` tras cada `set_mode()`: KMSDRM dibuja el
+cursor en un plane DRM fuera del surface y en tty1 no hay compositor que lo
+oculte. Las fuentes son 20/16/12 px y los textos se recortan al ancho útil de
+640 px, ajustando también posiciones y separadores del HUD para que no se
+solapen.
 
 Pygame SDL GameController normaliza botones/d-pad. Para mandos no mapeados se
 mantiene fallback de joystick: hat/axis y botones físicos estándar A=0, B=1,
@@ -116,13 +119,17 @@ reglas sudo sin contraseña. El botón de actualización del menú ejecuta
 esos controles y rechazando el comando si `bash` no está disponible. Se pasa
 `HUNTERZERO_UPDATE_GUI=1` para que solo haga `git pull`: sin tty `sudo` no puede
 pedir contraseña y reiniciar el servicio mataría la interfaz antes de mostrar el
-resultado. La pantalla muestra tiempo, log en vivo y barra de progreso; los pasos
-con root se indican al terminar para ejecutarlos por SSH.
+resultado. La pantalla muestra tiempo, log en vivo y una barra de actividad
+indeterminada (nunca un porcentaje falso, porque `git pull` no informa de avance);
+los pasos con root se indican al terminar para ejecutarlos por SSH.
 
 ## Trazabilidad de UI y errores
 
 - Los eventos del gamepad se normalizan a acciones UP/DOWN/LEFT/RIGHT/OPEN/BACK
-  y START antes de llegar a pantallas.
+  y START antes de llegar a pantallas. START equivale a OPEN dentro de un módulo
+  para que ningún botón quede muerto. El timeout máximo es
+  `MAX_COMMAND_TIMEOUT_SECONDS` (180 s) y Nmap usa ese valor: un timeout mayor
+  hacía que `ProcessManager` rechazara el escaneo sin lanzarlo.
 - Ping y Nmap mantienen estado propio de ajustes, edición, confirmación,
   ejecución y resultado usando el layout parametrizado compartido. El Monitor
   del Sistema tiene pantalla y ayuda propias.

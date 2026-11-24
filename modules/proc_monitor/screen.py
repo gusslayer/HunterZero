@@ -1,12 +1,14 @@
 """Process-monitor view listing the busiest processes in a top-style summary."""
 
+import time
+
 import pygame
 
 from core import theme
 from core.input import BACK, OPEN
 from core.process_manager import ProcessManager
 from core.ui.help_view import draw_help_view
-from modules.proc_monitor.main import ProcessSnapshot, snapshot_processes
+from modules.proc_monitor.main import ProcessSampler, ProcessSnapshot
 
 
 class ProcMonitorScreen:
@@ -15,7 +17,9 @@ class ProcMonitorScreen:
     def __init__(self) -> None:
         """Initialize the screen with the first summarized process snapshot."""
         self.show_help = False
-        self.processes: tuple[ProcessSnapshot, ...] = snapshot_processes()
+        self.sampler = ProcessSampler()
+        self.processes: tuple[ProcessSnapshot, ...] = self.sampler.snapshot()
+        self.last_refresh = time.monotonic()
 
     def handle(self, action, processes: ProcessManager) -> bool:
         """Toggle help with A or leave the monitor with B."""
@@ -27,9 +31,13 @@ class ProcMonitorScreen:
         return False
 
     def sync(self, processes: ProcessManager) -> None:
-        """Refresh the summarized process snapshot on every app tick."""
+        """Refresh the CPU snapshot once per second instead of every frame."""
         del processes
-        self.processes = snapshot_processes()
+        now = time.monotonic()
+        if now - self.last_refresh < 1.0:
+            return
+        self.last_refresh = now
+        self.processes = self.sampler.snapshot()
 
     def draw(
         self,
@@ -68,7 +76,7 @@ class ProcMonitorScreen:
             for index, snap in enumerate(self.processes):
                 line = (
                     f"{snap.name[:11]:<11} {snap.pid:>5} {snap.cpu_percent:4.0f}% "
-                    f"{snap.memory_percent:4.0f}% {snap.elapsed[:6]}"
+                    f"{snap.memory_percent:4.0f}% {snap.elapsed[:7]}"
                 )
                 surface.blit(body_font.render(line, True, theme.WHITE), (34, 128 + index * 32))
         else:

@@ -33,8 +33,13 @@ ROOT = Path(__file__).resolve().parents[1]
 MENU_FOOTER_HINTS = [
     ("D-PAD MOVER", 24),
     ("A ABRIR", 190),
-    ("START DETALLE", 350),
+    ("START ABRIR", 350),
 ]
+
+
+def _hide_mouse_cursor() -> None:
+    """Ocultar el cursor de SDL para que en el framebuffer solo se vea la interfaz."""
+    pygame.mouse.set_visible(False)
 
 
 class HunterZeroApp:
@@ -63,7 +68,10 @@ class HunterZeroApp:
         self.update_plugin = Plugin(
             identifier="update",
             name="ACTUALIZAR HUNTERZERO",
-            description="Ejecuta 'git pull --ff-only' y reinicia el servicio.",
+            description=(
+                "Descarga el código con git pull --ff-only; los pasos con sudo "
+                "se indican al terminar."
+            ),
             icon="rotate-cw",
             path=ROOT,
             screen_path=ROOT / "core" / "ui" / "update_screen.py",
@@ -94,6 +102,7 @@ class HunterZeroApp:
         pygame.init()
         pygame.display.set_caption("HunterZero")
         self.surface = create_display()
+        _hide_mouse_cursor()
         self.joysticks = initialize_joysticks(self.logger)
         self.title_font = theme.load_font(20)
         self.body_font = theme.load_font(16)
@@ -128,6 +137,7 @@ class HunterZeroApp:
             if action == QUIT:
                 # SDL puede emitir SDL_QUIT al cambiar de VT o consola. No hay
                 # ningún control de salida en la GPi: volver al menú, nunca cerrar.
+                self.processes.stop()
                 self._close_tool_screen()
                 continue
             if self.menu.active_plugin:
@@ -162,6 +172,10 @@ class HunterZeroApp:
     def _handle_plugin_action(self, action) -> None:
         """Route actions to the active tool or return to the module list."""
         if self.tool_screen:
+            # START dentro de un módulo equivale a A: ejecuta o confirma la
+            # acción de la pantalla en lugar de quedarse sin efecto.
+            if action == RUN:
+                action = OPEN
             if self.tool_screen.handle(action, self.processes):
                 self._close_tool_screen()
             return

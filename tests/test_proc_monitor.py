@@ -2,11 +2,12 @@
 
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import yaml
 
 from core.input import BACK, OPEN
-from modules.proc_monitor.main import _format_elapsed
+from modules.proc_monitor.main import ProcessSampler, _RawProcess, _format_elapsed
 from modules.proc_monitor.screen import ProcMonitorScreen
 
 
@@ -48,6 +49,26 @@ class ProcMonitorTests(unittest.TestCase):
         self.assertIsInstance(screen.processes, tuple)
         screen.sync(FakeProcessManager())
         self.assertIsInstance(screen.processes, tuple)
+
+    def test_sampler_reports_cpu_used_between_refreshes(self):
+        """Report instantaneous CPU load instead of an average since boot."""
+        sampler = ProcessSampler()
+        first = (
+            _RawProcess(
+                pid=7, name="python", cpu_seconds=10.0, memory_percent=1.0, elapsed="1s"
+            ),
+        )
+        second = (
+            _RawProcess(
+                pid=7, name="python", cpu_seconds=10.5, memory_percent=1.0, elapsed="2s"
+            ),
+        )
+        with patch(
+            "modules.proc_monitor.main._read_raw_processes", side_effect=[first, second]
+        ), patch("modules.proc_monitor.main.time.monotonic", side_effect=[0.0, 1.0]):
+            self.assertEqual(sampler.snapshot()[0].cpu_percent, 0.0)
+            snapshots = sampler.snapshot()
+        self.assertAlmostEqual(snapshots[0].cpu_percent, 50.0)
 
     def test_format_elapsed_produces_compact_strings(self):
         """Format elapsed seconds as seconds, minutes, or hours strings."""

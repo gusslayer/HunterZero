@@ -15,6 +15,7 @@ UPDATE_DEPENDENCY_HINT = (
     " sudo bash deploy/deps.sh."
 )
 MAX_DISPLAY_OUTPUT = 4096
+MAX_COMMAND_TIMEOUT_SECONDS = 180
 
 
 @dataclass
@@ -53,7 +54,7 @@ class ProcessManager:
             f"No está instalado {command[0]}; instala ping y nmap.",
         )
 
-    def start_update(self, timeout_seconds: int = 180) -> bool:
+    def start_update(self, timeout_seconds: int = MAX_COMMAND_TIMEOUT_SECONDS) -> bool:
         """Run deploy/update.sh with the same guarded launcher as tool commands."""
         command = ["bash", str(self.root / "deploy" / "update.sh")]
         environment = os.environ.copy()
@@ -81,7 +82,7 @@ class ProcessManager:
         if hasattr(os, "geteuid") and os.geteuid() == 0:
             self.message = "Por seguridad, no ejecutes HunterZero como root."
             return False
-        if not 1 <= timeout_seconds <= 180:
+        if not 1 <= timeout_seconds <= MAX_COMMAND_TIMEOUT_SECONDS:
             self.message = "Tiempo límite fuera del rango permitido."
             return False
         if any(not isinstance(argument, str) or "\x00" in argument for argument in command):

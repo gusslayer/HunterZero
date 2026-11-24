@@ -30,6 +30,11 @@ def create_display() -> pygame.Surface:
         try:
             pygame.display.init()
             surface = pygame.display.set_mode((theme.WIDTH, theme.HEIGHT), flags)
+            try:
+                # KMSDRM muestra el cursor en un plane DRM ajeno al surface.
+                pygame.mouse.set_visible(False)
+            except pygame.error as exc:
+                LOGGER.warning("No se pudo ocultar el cursor SDL: %s", exc)
             pygame.display.set_caption("HunterZero")
             if errors:
                 LOGGER.warning("Pantalla inicializada con %s tras fallar %s", driver, errors)

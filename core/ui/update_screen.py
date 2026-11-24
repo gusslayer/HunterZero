@@ -66,7 +66,7 @@ class UpdateScreen:
             dots = "." * (elapsed % 4)
             lines = (
                 f"ACTUALIZANDO HUNTERZERO{dots}",
-                f"Tiempo: {elapsed}s / 180s",
+                f"Esperando git pull: {elapsed}s (máx. 180s)",
                 *[line[:46] for line in processes.output.splitlines()[-2:]],
                 "B cancela la descarga.",
             )
@@ -79,10 +79,10 @@ class UpdateScreen:
             self._draw_progress(surface, elapsed)
 
     def _draw_progress(self, surface: pygame.Surface, elapsed: int) -> None:
-        """Draw a bounded progress bar for the update's maximum duration."""
+        """Show indeterminate activity; git pull does not expose real progress."""
         pygame.draw.rect(surface, theme.DIM_ORANGE, (30, 350, 580, 12))
-        ratio = min(1.0, elapsed / 180)
-        pygame.draw.rect(surface, theme.ORANGE, (30, 350, int(580 * ratio), 12))
+        position = 30 + int((elapsed * 90) % 540)
+        pygame.draw.rect(surface, theme.ORANGE, (position, 350, 40, 12))
 
     def footer_hints(self) -> list[tuple[str, int]]:
         """Return button labels for the current update-screen state."""

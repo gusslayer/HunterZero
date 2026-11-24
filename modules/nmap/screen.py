@@ -1,6 +1,7 @@
 """Nmap-specific parameters and guidance for the shared tool-screen layout."""
 
 # Mantiene toda la configuración visual y de ayuda dentro del módulo Nmap.
+from core.process_manager import MAX_COMMAND_TIMEOUT_SECONDS
 from core.ui.parameterized_tool_screen import ParameterizedToolScreen
 from modules.nmap.main import PORT_COUNTS, build_nmap_command
 
@@ -33,5 +34,5 @@ class NmapScreen(ParameterizedToolScreen):
                 ),
             ),
             command_builder=build_nmap_command,
-            timeout_seconds=lambda _count: 200,
+            timeout_seconds=lambda _count: MAX_COMMAND_TIMEOUT_SECONDS,
         )
