@@ -1,0 +1,10 @@
+# Pantalla Bluetooth basada en BLEeding: analisis pasivo y DeAuth confirmado.
+id: bleeding
+name: BLEEDING
+description: Escanea BLE/BR-EDR, enumera servicios y ejecuta DeAuth con confirmacion.
+icon: radio
+version: "0.1.0"
+screen: screen.py
+deps:
+  - bluez
+  - libbluetooth-dev

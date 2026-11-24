@@ -37,14 +37,19 @@ class FakeToolScreen:
     """Minimal module screen that records the actions it receives."""
 
     def __init__(self) -> None:
-        """Start with an empty action history."""
+        """Start with an empty action history and no close calls."""
         self.actions = []
+        self.close_calls = 0
 
     def handle(self, action, processes) -> bool:
         """Record one action and keep the module open."""
         del processes
         self.actions.append(action)
         return False
+
+    def close(self) -> None:
+        """Record that the app asked this screen to stop its background work."""
+        self.close_calls += 1
 
 
 class AppLifecycleTests(unittest.TestCase):
@@ -80,6 +85,16 @@ class AppLifecycleTests(unittest.TestCase):
         self.assertIsNone(app.tool_screen)
         self.assertEqual(app.menu.back_calls, 1)
         self.assertTrue(app.processes.stopped)
+
+    def test_leaving_a_screen_closes_its_background_work(self):
+        """Ask module screens to cancel their jobs before dropping the reference."""
+        app = object.__new__(HunterZeroApp)
+        app.menu = FakeMenu()
+        screen = FakeToolScreen()
+        app.tool_screen = screen
+        app._close_tool_screen()
+        self.assertEqual(screen.close_calls, 1)
+        self.assertIsNone(app.tool_screen)
 
 
 if __name__ == "__main__":

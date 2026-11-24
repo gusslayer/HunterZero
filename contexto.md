@@ -35,6 +35,27 @@ las opciones de herramientas distintas.
 - Presenta el resultado del comando y permite regresar con A/B.
 - Utilizar solamente en equipos propios o con autorización.
 
+### BLEEDING (`modules/bleeding/`)
+
+- Pantalla propia con modo BLE o BR/EDR, editor de MAC con D-pad, escaneo,
+  enumeración de servicios y DeAuth; hereda la filosofía de BLEeding
+  (https://github.com/sammwyy/BLEeding/blob/main/bleeding.py) pero usa hilos
+  gobernados por la GUI, sin procesos externos ni allowlist nueva.
+- `engine.py` aísla `bleak`/`pybluez` como importaciones opcionales y valida
+  MAC, modo, protocolo, puerto, tamaño, hilos y duración antes de conectar.
+  Las pruebas inyectan bibliotecas falsas: no abren sockets ni envían tráfico.
+- DeAuth BLE respeta `write` / `write-without-response` y limita el payload al
+  MTU de la characteristic. DeAuth BR/EDR usa `socket.AF_BLUETOOTH` de la
+  stdlib, así que no depende de PyBluez; el escaneo y SDP clásico sí lo
+  necesitan. En Python 3.13 `pip install pybluez` falla por `use_2to3`: usa
+  `python3-bluez` de APT si está disponible o el master de GitHub con
+  `build-essential` y `python3-dev`.
+- La confirmación muestra objetivo y parámetros; B cancela el trabajo en curso
+  mediante `threading.Event`, con duración máxima de 180 s y sin root.
+- El manifiesto declara `bluez` y `libbluetooth-dev` para APT; `bleak` se
+  instala en el venv con `.venv/bin/pip install 'bleak>=0.22,<1'`.
+- Uso previsto: solo dispositivos propios o con autorización explícita.
+
 ### Monitor del sistema
 
 Lee CPU, RAM, temperatura, Wi-Fi y batería cuando los expone procfs/sysfs.
@@ -93,6 +114,7 @@ main.py
 core/                     # App, control de entrada, métricas y procesos
 core/ui/                  # HUD, widgets, layouts, ayuda y vistas reusables
 modules/
+  bleeding/               # motor Bluetooth, editor MAC, pantalla y pruebas
   ping/                   # manifiesto, builder, validación y pantalla Ping
   nmap/                   # manifiesto, builder, validación y pantalla Nmap
   system_monitor/         # pantalla y ayuda de métricas locales

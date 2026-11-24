@@ -9,7 +9,7 @@
 
 Interfaz modular para GPi Case 2W y Raspberry Pi Zero W, con Pygame, navegación por gamepad y estética pixel art de alto contraste. Toda la interfaz se dibuja en un lienzo virtual de 320x240 y se escala 2x con nearest-neighbor a 640x480; usa negro, blanco y naranja, sin suavizado de tipografía. El tipo de letra es Press Start 2P, incluido en `assets/fonts/PressStart2P-Regular.ttf` (fuente original: https://fonts.google.com/specimen/Press+Start+2P), porque sus glifos de 8x8 se leen nítidos tras el escalado entero 2x. Los iconos provienen del pack pixelarticons de halfmage (https://github.com/halfmage/pixelarticons).
 
-> Ping, Nmap y NSLOOKUP son módulos independientes con opciones, validación y comandos propios. Ping y Nmap comparten la vista de configuración/ayuda y el editor IPv4 (octeto por octeto con el D-pad): Ping envía 1–4 paquetes y Nmap usa TCP Connect, 20/50/100 puertos comunes y scripts NSE de la categoría vuln. NSLOOKUP tiene su propio editor de dominio con matriz de caracteres estilo arcade y muestra las IP resueltas (A o AAAA). Toda ejecución solicita confirmación. El Monitor del Sistema muestra métricas locales. No se incluyen módulos vacíos ni una terminal de comandos.
+> Ping, Nmap y NSLOOKUP son módulos independientes con opciones, validación y comandos propios. Ping y Nmap comparten la vista de configuración/ayuda y el editor IPv4 (octeto por octeto con el D-pad): Ping envía 1–4 paquetes y Nmap usa TCP Connect, 20/50/100 puertos comunes y scripts NSE de la categoría vuln. NSLOOKUP tiene su propio editor de dominio con matriz de caracteres estilo arcade y muestra las IP resueltas (A o AAAA). BLEEDING añade escaneo BLE/BR-EDR, enumeración de servicios y DeAuth con confirmación explícita, duración máxima de 180 s y cancelación con B; usa hilos dentro de la GUI, sin nuevos ejecutables ni sudo. Toda ejecución solicita confirmación. El Monitor del Sistema muestra métricas locales. No se incluyen módulos vacíos ni una terminal de comandos.
 
 ## Requisitos
 
@@ -135,6 +135,7 @@ En Ping: selecciona **IP DESTINO**, edita sus octetos con el D-pad y pulsa A par
 ```text
 core/                  # Bucle Pygame, entrada, estado, procesos, métricas y widgets comunes
 core/ui/               # Layout, HUD, ayuda y pantallas parametrizadas reutilizables
+modules/bleeding/      # Motor Bluetooth, editor MAC, pantalla y pruebas de BLEeding
 modules/ping/          # Especificación, validación, comando y pantalla de Ping
 modules/nmap/          # Especificación, validación, comando y pantalla de Nmap
 modules/nslookup/      # Editor de dominio, argv validado y resultado de DNS
@@ -158,7 +159,7 @@ Consulta [MODULE_FORMAT.md](MODULE_FORMAT.md) para el formato completo y obligat
 4. Reutiliza las vistas de destino, parámetros y ayuda de `core/ui/` cuando correspondan; una función sin comportamiento real no debe tener manifiesto ni mostrarse en el menú.
 5. No uses `shell=True`, no eleves privilegios ni aceptes comandos de texto desde la pantalla.
 
-Los manifiestos se leen con `yaml.safe_load`; los manifiestos inválidos o sin pantalla se registran en `logs/app.log` y no aparecen en el menú. El lanzador solo admite `ping`, `nmap` y `nslookup`, nunca usa shell, no acepta comandos de texto y termina procesos al vencer el timeout o cancelar desde la GUI. Ping y Nmap validan la IPv4 introducida; NSLOOKUP valida el nombre de dominio carácter a carácter y solo pasa al argv un host canónico. Ejecutar diagnósticos únicamente sobre equipos propios o autorizados.
+Los manifiestos se leen con `yaml.safe_load`; los manifiestos inválidos o sin pantalla se registran en `logs/app.log` y no aparecen en el menú. El lanzador solo admite `ping`, `nmap` y `nslookup`, nunca usa shell, no acepta comandos de texto y termina procesos al vencer el timeout o cancelar desde la GUI. Ping y Nmap validan la IPv4 introducida; NSLOOKUP valida el nombre de dominio carácter a carácter y solo pasa al argv un host canónico. BLEEDING valida la MAC y todos los límites del ataque antes de abrir una conexión. `bleak` (BLE) es opcional y se instala en el venv; el DeAuth BR/EDR usa `socket.AF_BLUETOOTH` de la stdlib y no necesita PyBluez. Para escanear/enumerar BR/EDR sí hace falta PyBluez: en Python 3.13 `pip install pybluez` falla por `use_2to3`, así que usa `python3-bluez` de APT si está disponible o compila el master mantenido con `.venv/bin/pip install git+https://github.com/pybluez/pybluez.git@master` (requiere `build-essential` y `python3-dev`). El manifiesto declara `bluez` y `libbluetooth-dev`. Ejecutar diagnósticos únicamente sobre equipos propios o autorizados.
 
 Todos los métodos nuevos deben incluir docstrings que describan su propósito; las pruebas cubren argumentos, límites y navegación sin lanzar tráfico de red.
 

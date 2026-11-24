@@ -2,3 +2,8 @@
 pygame-ce>=2.5.3,<3
 # Lectura segura de manifiestos YAML y configuración.
 PyYAML>=6.0.2,<7
+# Opcional para el módulo bleeding en la GPi: BLE usa bleak (puro Python).
+# bleak>=0.22,<1
+# El escaneo BR/EDR necesita python3-bluez (APT) o PyBluez desde el master
+# mantenido; pip install pybluez falla con Python 3.13 (use_2to3). El DeAuth
+# BR/EDR usa socket.AF_BLUETOOTH de la stdlib y no requiere PyBluez.

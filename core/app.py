@@ -21,6 +21,7 @@ from core.ui.layout import MenuLayout
 from core.ui.text_cache import render_cached
 from core.ui.update_screen import UpdateScreen
 from core.ui.widgets import draw_frame, draw_row, plain_text, wrap_text
+from modules.bleeding.screen import BleedingScreen
 from modules.nmap.screen import NmapScreen
 from modules.nslookup.screen import NsLookupScreen
 from modules.ping.screen import PingScreen
@@ -52,6 +53,7 @@ class HunterZeroApp:
         self.logger = configure_logging(ROOT)
         self.settings = AppSettings.load(ROOT / "config" / "settings.json")
         self.screen_types = {
+            "bleeding": BleedingScreen,
             "ping": PingScreen,
             "nmap": NmapScreen,
             "nslookup": NsLookupScreen,
@@ -90,7 +92,8 @@ class HunterZeroApp:
         self.last_heartbeat = 0.0
         self.running = True
         self.tool_screen: (
-            PingScreen
+            BleedingScreen
+            | PingScreen
             | NmapScreen
             | NsLookupScreen
             | SystemMonitorScreen
@@ -182,7 +185,11 @@ class HunterZeroApp:
         self.tool_screen = screen_type()
 
     def _close_tool_screen(self) -> None:
-        """Return to the module list from any screen without stopping the app."""
+        """Return to the module list and let screens stop their own background work."""
+        screen = self.tool_screen
+        closer = getattr(screen, "close", None)
+        if callable(closer):
+            closer()
         self.menu.back()
         self.tool_screen = None
 
