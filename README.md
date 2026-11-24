@@ -39,8 +39,10 @@ Los scripts de `deploy/` se relanzan automáticamente con `bash` si se invocan c
 
 El instalador instala de APT todas las dependencias del sistema necesarias para una
 Pi OS Lite limpia: Git, Python y venv, Pygame, PyYAML, SDL, fuentes, utilidades
-de proceso/red, `ping`, `nmap` y soporte de dispositivos. Configura el entorno
-virtual, agrega el usuario actual a `input` y `video` e instala la unidad systemd.
+de proceso/red, `ping`, `nmap` y soporte de dispositivos. También instala EGL,
+GLES, GBM, Mesa y libdrm, necesarios para el driver `kmsdrm` de SDL2. Configura
+el entorno virtual, agrega el usuario actual a `input`, `video` y `render`, e
+instala la unidad systemd (que hereda esos grupos del usuario).
 
 ### Pantalla de la GPi Case 2W
 
@@ -58,6 +60,17 @@ En una Pi ya instalada se puede aplicar solo la configuración de pantalla con
 `sudo bash deploy/display-config.sh`. Para volver al archivo anterior:
 `sudo cp /boot/firmware/config.txt.hunterzero.bak /boot/firmware/config.txt`.
 `deploy/update.sh` no sobrescribe el `config.txt` en cada actualización.
+
+Si `journalctl -u hunterzero.service -b` muestra `pygame.error: EGL not initialized`,
+comprueba lo siguiente antes de habilitar el servicio:
+
+```bash
+ls -l /dev/dri                 # deben aparecer card0 y renderD128
+id                             # el usuario debe estar en video y render
+sudo dmesg | grep -i vc4       # el driver VC4/KMS debe haberse cargado
+sudo bash deploy/install.sh    # reinstala las librerías EGL/GBM/Mesa y los grupos
+sudo reboot
+```
 
 Cierra sesión y vuelve a entrar para que se apliquen los grupos. Comprueba primero
 la interfaz en la consola conectada a la GPi:

@@ -129,10 +129,14 @@ esos controles y rechazando el comando si `bash` no está disponible.
 
 - Pi Zero W, imagen armhf de 32 bits, Python 3.13 de Trixie.
 - Paquetes APT: `python3`, `python3-venv`, `python3-pygame`,
-  `python3-yaml`, `iputils-ping`, `nmap`, `git`.
+  `python3-yaml`, `iputils-ping`, `nmap`, `git`, y para SDL `kmsdrm`:
+  `libegl1`, `libegl-mesa0`, `libgles2`, `libgbm1`, `libgl1-mesa-dri`, `libdrm2`.
+  Sin EGL/GBM/Mesa, `pygame.display.set_mode` falla con `EGL not initialized`.
 - El venv se crea con `--system-site-packages` para reutilizar los bindings de
   Pygame/YAML compilados para ARMv6; no depender de wheels PyPI ARMv6.
-- Usuario estándar agregado a los grupos `input` y `video`.
+- Usuario estándar agregado a los grupos `input`, `video` y `render` (este último
+  para `/dev/dri/renderD128`). La unidad systemd no fija `SupplementaryGroups`
+  y hereda los grupos del usuario.
 - `deploy/install.sh` instala `deploy/config.txt` en `/boot/firmware/config.txt`
   mediante `deploy/display-config.sh`: timings DPI 640×480, `vc4-kms-v3d` +
   `vc4-kms-dpi-generic`, apagado por GPIO 26 y audio PWM. Respaldar el original

@@ -7,8 +7,8 @@ Conflicts=getty@tty1.service
 [Service]
 Type=simple
 User=@APP_USER@
-# Permite leer gamepad y framebuffer; el usuario nunca debe ejecutarse como root.
-SupplementaryGroups=input video
+# Sin SupplementaryGroups, systemd toma los grupos del usuario (input, video y
+# render, gestionados por install.sh). El usuario nunca debe ejecutarse como root.
 WorkingDirectory=@APP_DIR@
 Environment=SDL_VIDEODRIVER=kmsdrm
 Environment=HUNTERZERO_FULLSCREEN=1

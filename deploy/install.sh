@@ -43,10 +43,13 @@ apt-get update
 # fonts-dejavu-core (el código lee /proc y /sys directamente y usa la fuente
 # Press Start 2P de assets/fonts). udev y dbus se conservan por la gestión de
 # entrada (gamepad/teclado) y la del sistema (logind/systemctl).
+# EGL, GLES, GBM, Mesa y libdrm son necesarios en tiempo de ejecución para el
+# driver kmsdrm de SDL2; sin ellos pygame falla con "EGL not initialized".
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
     ca-certificates git sudo udev dbus python3 python3-venv python3-pip \
     python3-pygame python3-yaml \
-    libsdl2-2.0-0 libsdl2-ttf-2.0-0 libsdl2-gfx-1.0-0
+    libsdl2-2.0-0 libsdl2-ttf-2.0-0 libsdl2-gfx-1.0-0 \
+    libegl1 libegl-mesa0 libgles2 libgbm1 libgl1-mesa-dri libdrm2
 
 # Verifica que el binario instalado tenga punteros de 32 bits.
 if ! python3 -c 'import struct; raise SystemExit(0 if struct.calcsize("P") == 4 else 1)' >/dev/null 2>&1; then
@@ -57,7 +60,12 @@ fi
 # Recrea el entorno como el usuario final para que pueda actualizarlo sin root.
 rm -rf "$APP_DIR/.venv"
 runuser -u "$APP_USER" -- python3 -m venv --system-site-packages "$APP_DIR/.venv"
-usermod -aG input,video "$APP_USER"
+# /dev/dri/card0 usa el grupo video y /dev/dri/renderD128 el grupo render en Trixie.
+USER_GROUPS="input,video"
+if getent group render >/dev/null 2>&1; then
+    USER_GROUPS="${USER_GROUPS},render"
+fi
+usermod -aG "$USER_GROUPS" "$APP_USER"
 install -d -o "$APP_USER" \
     "$APP_DIR/logs" "$APP_DIR/state/heartbeats"
 
