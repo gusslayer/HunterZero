@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
+# Si se invoca con sh/dash, vuelve a ejecutarse con bash: allí no existen EUID ni [[ ]].
+if [ -z "${BASH_VERSION:-}" ]; then
+    exec bash "$0" "$@"
+fi
 set -euo pipefail
 
 # El objetivo soportado es Raspberry Pi OS Lite de 32 bits (armhf).
 # Comprueba antes de tocar APT para evitar una instalación parcialmente creada.
-if [[ "${EUID}" -ne 0 ]]; then
+if [ "$(id -u)" -ne 0 ]; then
     echo "Ejecuta este instalador con sudo." >&2
     exit 1
 fi

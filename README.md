@@ -34,6 +34,9 @@ cd ~/HunterZero
 sudo bash deploy/install.sh
 ```
 
+Los scripts de `deploy/` se relanzan automáticamente con `bash` si se invocan con
+`sh`, y comprueban privilegios con `id -u` para funcionar también con `dash`.
+
 El instalador instala de APT todas las dependencias del sistema necesarias para una
 Pi OS Lite limpia: Git, Python y venv, Pygame, PyYAML, SDL, fuentes, utilidades
 de proceso/red, `ping`, `nmap` y soporte de dispositivos. Configura el entorno

@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Si se invoca con sh/dash, vuelve a ejecutarse con bash: allí no existe BASH_SOURCE.
+if [ -z "${BASH_VERSION:-}" ]; then
+    exec bash "$0" "$@"
+fi
 set -euo pipefail
 
 # Recoge los paquetes APT declarados en los manifiestos de los módulos y los

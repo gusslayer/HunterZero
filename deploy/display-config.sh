@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
+# Si se invoca con sh/dash, vuelve a ejecutarse con bash: allí no existen EUID ni [[ ]].
+if [ -z "${BASH_VERSION:-}" ]; then
+    exec bash "$0" "$@"
+fi
 set -euo pipefail
 
 # Instala la configuración de pantalla DPI de la GPi Case 2W en Raspberry Pi OS Trixie.
 # Trixie monta la partición de arranque en /boot/firmware, no en /boot.
-if [[ "${EUID}" -ne 0 ]]; then
+if [ "$(id -u)" -ne 0 ]; then
     echo "Ejecuta este script con sudo: sudo bash deploy/display-config.sh" >&2
     exit 1
 fi
