@@ -7,7 +7,7 @@ from core.input import BACK, DOWN, LEFT, OPEN, RIGHT, UP
 from core.ui.help_view import draw_help_view
 from core.ui.hostname_editor import HostnameEditor
 from core.ui.text_cache import render_cached
-from core.ui.widgets import draw_frame, draw_row, draw_title, plain_text, wrap_text
+from core.ui.widgets import draw_frame, draw_row, plain_text, wrap_text
 from modules.nslookup.main import (
     MAX_LOOKUP_TIMEOUT_SECONDS,
     RECORD_TYPES,
@@ -80,7 +80,6 @@ class NsLookupScreen:
         del stats
         pygame.draw.rect(surface, theme.BG_COLOR, (0, 28, theme.WIDTH, 184))
         if self.phase == "edit_host":
-            draw_title(surface, title_font, "EDITAR HOST")
             self.editor.draw(surface, body_font, small_font)
             return
         if self.phase == "help":
@@ -108,7 +107,6 @@ class NsLookupScreen:
                 ),
             )
             return
-        draw_title(surface, title_font, self.title)
         if self.phase == "settings":
             self._draw_settings(surface, body_font)
             self._draw_tip(surface, small_font)
@@ -171,15 +169,15 @@ class NsLookupScreen:
         """Draw the editable host, record type, and action rows."""
         values = [self.editor.value, RECORD_TYPES[self.record_type], "", "", ""]
         for index, label in enumerate(self.rows):
-            row = pygame.Rect(12, 52 + index * 19, 296, 17)
+            row = pygame.Rect(12, 32 + index * 19, 296, 17)
             draw_row(surface, row, label, values[index], index == self.selected, font)
 
     def _draw_tip(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
         """Fill the lower panel with a short operating tip."""
-        draw_frame(surface, pygame.Rect(10, 169, 300, 41), theme.GRID_COLOR, theme.PANEL_COLOR)
-        surface.blit(render_cached(font, "AYUDA RAPIDA", theme.ACCENT_COLOR), (16, 173))
+        draw_frame(surface, pygame.Rect(10, 150, 300, 59), theme.GRID_COLOR, theme.PANEL_COLOR)
+        surface.blit(render_cached(font, "AYUDA RAPIDA", theme.ACCENT_COLOR), (16, 154))
         for index, line in enumerate(wrap_text("ESCRIBE EL DOMINIO Y PULSA A PARA RESOLVER.", 34)):
-            surface.blit(render_cached(font, line, theme.TEXT_COLOR), (16, 184 + index * 11))
+            surface.blit(render_cached(font, line, theme.TEXT_COLOR), (16, 165 + index * 11))
 
     def _draw_confirmation(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
         """Show the host and record type before requiring explicit approval."""
@@ -190,32 +188,32 @@ class NsLookupScreen:
         )
         for index, line in enumerate(lines):
             color = theme.ACCENT_COLOR if index == len(lines) - 1 else theme.TEXT_COLOR
-            surface.blit(render_cached(font, plain_text(line)[:34], color), (16, 60 + index * 16))
+            surface.blit(render_cached(font, plain_text(line)[:34], color), (16, 36 + index * 16))
 
     def _draw_running(self, surface: pygame.Surface, font, small_font) -> None:
         """Show progress while the bounded DNS query is running."""
-        surface.blit(render_cached(font, "CONSULTANDO DNS...", theme.TEXT_COLOR), (16, 62))
+        surface.blit(render_cached(font, "CONSULTANDO DNS...", theme.TEXT_COLOR), (16, 38))
         surface.blit(
-            render_cached(small_font, f"HOST: {self.editor.value}", theme.ACCENT_COLOR), (16, 84)
+            render_cached(small_font, f"HOST: {self.editor.value}", theme.ACCENT_COLOR), (16, 60)
         )
         surface.blit(
             render_cached(small_font, f"TIPO: {RECORD_TYPES[self.record_type]}", theme.MUTED_COLOR),
-            (16, 101),
+            (16, 77),
         )
 
     def _draw_result(self, surface: pygame.Surface, font: pygame.font.Font, processes) -> None:
         """Show the parsed IP addresses and the tail of the captured output."""
         surface.blit(
-            render_cached(font, plain_text(processes.message)[:34], theme.ACCENT_COLOR), (16, 58)
+            render_cached(font, plain_text(processes.message)[:34], theme.ACCENT_COLOR), (16, 34)
         )
         if self.addresses:
-            surface.blit(render_cached(font, "IP ENCONTRADA", theme.ACCENT_COLOR), (16, 76))
+            surface.blit(render_cached(font, "IP ENCONTRADA", theme.ACCENT_COLOR), (16, 54))
             for index, address in enumerate(self.addresses[:4]):
-                surface.blit(render_cached(font, address[:20], theme.TEXT_COLOR), (16, 90 + index * 14))
-            output_y = 90 + min(len(self.addresses), 4) * 14 + 6
+                surface.blit(render_cached(font, address[:20], theme.TEXT_COLOR), (16, 68 + index * 14))
+            output_y = 68 + min(len(self.addresses), 4) * 14 + 6
         else:
-            surface.blit(render_cached(font, "SIN IP EN LA RESPUESTA", theme.MUTED_COLOR), (16, 76))
-            output_y = 96
+            surface.blit(render_cached(font, "SIN IP EN LA RESPUESTA", theme.MUTED_COLOR), (16, 54))
+            output_y = 74
         for index, line in enumerate(processes.output.splitlines()[-3:]):
             if output_y + index * 14 > 190:
                 break

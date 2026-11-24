@@ -4,7 +4,7 @@ import pygame
 
 from core import theme
 from core.ui.text_cache import render_cached
-from core.ui.widgets import draw_title, plain_text
+from core.ui.widgets import plain_text
 
 
 def draw_help_view(
@@ -16,9 +16,9 @@ def draw_help_view(
     sections: tuple[tuple[str, tuple[str, ...]], ...],
 ) -> None:
     """Render titled help sections with wrapped text and common button guidance."""
+    del title_font
     pygame.draw.rect(surface, theme.BG_COLOR, (0, 28, theme.WIDTH, 184))
-    draw_title(surface, title_font, title, theme.ACCENT_COLOR)
-    y = 60
+    y = 36
     for heading, paragraphs in sections:
         if y >= 175:
             break

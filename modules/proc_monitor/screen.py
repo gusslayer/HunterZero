@@ -9,7 +9,7 @@ from core.input import BACK, OPEN
 from core.process_manager import ProcessManager
 from core.ui.help_view import draw_help_view
 from core.ui.text_cache import render_cached
-from core.ui.widgets import draw_title, plain_text
+from core.ui.widgets import plain_text
 from modules.proc_monitor.main import ProcessSampler, ProcessSnapshot
 
 
@@ -53,9 +53,8 @@ class ProcMonitorScreen:
         """Render the process list or the shared gamepad help view."""
         del processes
         del stats
+        del title_font
         pygame.draw.rect(surface, theme.BG_COLOR, (0, 28, theme.WIDTH, 184))
-        if not self.show_help:
-            draw_title(surface, title_font, "PROCESOS")
         if self.show_help:
             draw_help_view(
                 surface,
@@ -77,9 +76,9 @@ class ProcMonitorScreen:
             return
         if self.processes:
             surface.blit(
-                render_cached(body_font, "PROC   PID  %CPU %MEM HRA", theme.MUTED_COLOR), (16, 55)
+                render_cached(body_font, "PROC   PID  %CPU %MEM HRA", theme.MUTED_COLOR), (16, 34)
             )
-            y = 70
+            y = 48
             for snap in self.processes:
                 if y + body_font.get_height() >= 208:
                     break
@@ -91,7 +90,7 @@ class ProcMonitorScreen:
                 y += 15
         else:
             surface.blit(
-                render_cached(body_font, "SIN PROCESOS DISPONIBLES.", theme.TEXT_COLOR), (16, 70)
+                render_cached(body_font, "SIN PROCESOS DISPONIBLES.", theme.TEXT_COLOR), (16, 48)
             )
 
     def footer_hints(self) -> list[tuple[str, int]]:

@@ -11,7 +11,7 @@ from core.system_stats import SystemStats
 from core.ui.help_view import draw_help_view
 from core.ui.target_editor import IPv4Editor
 from core.ui.text_cache import render_cached
-from core.ui.widgets import draw_frame, draw_row, draw_title, plain_text, wrap_text
+from core.ui.widgets import draw_frame, draw_row, plain_text, wrap_text
 
 
 class ParameterizedToolScreen:
@@ -118,7 +118,6 @@ class ParameterizedToolScreen:
             )
             return
         pygame.draw.rect(surface, theme.BG_COLOR, (0, 28, theme.WIDTH, 184))
-        draw_title(surface, title_font, self.title)
         if self.phase == "settings":
             self._draw_settings(surface, body_font)
             self._draw_settings_tip(surface, small_font)
@@ -126,10 +125,10 @@ class ParameterizedToolScreen:
             self._draw_confirmation(surface, small_font)
         elif self.phase == "running":
             label = plain_text(f"{self.operation_label} EN CURSO")
-            surface.blit(render_cached(body_font, label, theme.TEXT_COLOR), (15, 60))
+            surface.blit(render_cached(body_font, label, theme.TEXT_COLOR), (16, 38))
             surface.blit(
                 render_cached(small_font, f"OBJETIVO: {self.target.address}", theme.ACCENT_COLOR),
-                (15, 80),
+                (16, 58),
             )
         else:
             self._draw_result(surface, small_font, processes)
@@ -210,16 +209,16 @@ class ParameterizedToolScreen:
             values.append(self._option_value())
         values.extend(("",) * (len(self.rows) - len(values)))
         for index, label in enumerate(self.rows):
-            row = pygame.Rect(12, 52 + index * 19, 296, 17)
+            row = pygame.Rect(12, 32 + index * 19, 296, 17)
             draw_row(surface, row, label, values[index], index == self.selected, font)
 
     def _draw_settings_tip(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
         """Fill the lower panel with a short, module-specific operating tip."""
-        draw_frame(surface, pygame.Rect(10, 169, 300, 41), theme.GRID_COLOR, theme.PANEL_COLOR)
-        surface.blit(render_cached(font, "AYUDA RAPIDA", theme.ACCENT_COLOR), (16, 173))
+        draw_frame(surface, pygame.Rect(10, 150, 300, 59), theme.GRID_COLOR, theme.PANEL_COLOR)
+        surface.blit(render_cached(font, "AYUDA RAPIDA", theme.ACCENT_COLOR), (16, 154))
         tip = self.help_sections[0][1][0] if self.help_sections else ""
         for line_index, line in enumerate(wrap_text(tip, 34)[:2]):
-            surface.blit(render_cached(font, line, theme.TEXT_COLOR), (16, 184 + line_index * 11))
+            surface.blit(render_cached(font, line, theme.TEXT_COLOR), (16, 165 + line_index * 11))
 
     def _draw_confirmation(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
         """Show target and selected parameter before requiring explicit approval."""
@@ -238,7 +237,7 @@ class ParameterizedToolScreen:
         for index, line in enumerate(lines):
             color = theme.ACCENT_COLOR if index == len(lines) - 1 else theme.TEXT_COLOR
             surface.blit(
-                render_cached(font, plain_text(line)[:36], color), (16, 58 + index * 16)
+                render_cached(font, plain_text(line)[:36], color), (16, 36 + index * 16)
             )
 
     def _draw_result(
@@ -253,5 +252,5 @@ class ParameterizedToolScreen:
         )
         for index, line in enumerate(processes.output.splitlines()[-6:]):
             surface.blit(
-                render_cached(font, plain_text(line)[:36], theme.TEXT_COLOR), (16, 76 + index * 14)
+                render_cached(font, plain_text(line)[:36], theme.TEXT_COLOR), (16, 54 + index * 14)
             )

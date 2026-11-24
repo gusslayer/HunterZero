@@ -17,17 +17,6 @@ def plain_text(text: str) -> str:
     )
 
 
-def draw_title(surface: pygame.Surface, font: pygame.font.Font, title: str, color=None) -> int:
-    """Draw the shared title band and return the first content row's y coordinate."""
-    tint = color if color is not None else theme.TEXT_COLOR
-    pygame.draw.rect(surface, theme.PANEL_COLOR, (0, 28, theme.WIDTH, 20))
-    pygame.draw.line(surface, theme.MUTED_COLOR, (10, 48), (310, 48), 1)
-    rendered = font.render(plain_text(title)[:18], False, tint)
-    surface.blit(rendered, (12, 32))
-    pygame.draw.rect(surface, theme.ACCENT_COLOR, (12 + rendered.get_width() + 6, 35, 4, 10))
-    return 52
-
-
 def draw_frame(surface: pygame.Surface, rect: pygame.Rect, color, fill=None) -> None:
     """Draw a crisp one-pixel frame with small corner ticks around a panel."""
     if fill is not None:

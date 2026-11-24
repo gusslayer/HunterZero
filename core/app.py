@@ -250,23 +250,12 @@ class HunterZeroApp:
         draw_footer(self.virtual_screen, self.small_font, hints)
 
     def _draw_menu(self) -> None:
-        """Render the branded header, the module list, and the selected module's details."""
-        pygame.draw.rect(self.virtual_screen, theme.PANEL_COLOR, (0, 27, theme.WIDTH, 21))
-        pygame.draw.line(self.virtual_screen, theme.MUTED_COLOR, (10, 47), (310, 47), 1)
-        title = render_cached(self.title_font, "HUNTERZERO", theme.TEXT_COLOR)
-        self.virtual_screen.blit(title, (12, 31))
-        pygame.draw.rect(
-            self.virtual_screen, theme.ACCENT_COLOR, (12 + title.get_width() + 7, 34, 4, 10)
-        )
+        """Render the module list and the selected module's details without a title band."""
         selected_plugin = self.menu.plugins[self.menu.selected] if self.menu.plugins else None
-        counter = f"{self.menu.selected + 1:02d}/{len(self.menu.plugins):02d}"
-        tag = render_cached(self.small_font, f"MOD {counter}", theme.ACCENT_COLOR)
-        self.virtual_screen.blit(tag, (theme.WIDTH - 12 - tag.get_width(), 39))
-
         draw_frame(
-            self.virtual_screen, pygame.Rect(10, 50, 300, 116), theme.GRID_COLOR, theme.BG_COLOR
+            self.virtual_screen, pygame.Rect(10, 32, 300, 132), theme.GRID_COLOR, theme.BG_COLOR
         )
-        layout = MenuLayout(pygame.Rect(13, 52, 294, 112), 17, 2)
+        layout = MenuLayout(pygame.Rect(13, 35, 294, 126), 19, 2)
         first, last = layout.visible_range(len(self.menu.plugins), self.menu.selected)
         for index in range(first, last):
             plugin = self.menu.plugins[index]
@@ -284,7 +273,7 @@ class HunterZeroApp:
             )
 
         draw_frame(
-            self.virtual_screen, pygame.Rect(10, 169, 300, 41), theme.GRID_COLOR, theme.PANEL_COLOR
+            self.virtual_screen, pygame.Rect(10, 168, 300, 41), theme.GRID_COLOR, theme.PANEL_COLOR
         )
         if selected_plugin:
             description = wrap_text(selected_plugin.description, 34)
@@ -293,8 +282,8 @@ class HunterZeroApp:
                 visible_lines[-1] = f"{visible_lines[-1]}.."
             for line_index, line in enumerate(visible_lines):
                 color = theme.ACCENT_COLOR if line_index == 0 else theme.TEXT_COLOR
-                self._draw_text(line, 16, 172 + line_index * 10, self.small_font, color)
-        pygame.draw.line(self.virtual_screen, theme.GRID_COLOR, (15, 191), (305, 191), 1)
+                self._draw_text(line, 16, 171 + line_index * 10, self.small_font, color)
+        pygame.draw.line(self.virtual_screen, theme.GRID_COLOR, (15, 190), (305, 190), 1)
         if self.catalog.errors:
             status, color = "AVISO: REVISA LOGS/APP.LOG", theme.ACCENT_COLOR
         elif self.processes.message:
@@ -302,7 +291,7 @@ class HunterZeroApp:
         else:
             wifi = "ON" if self.stats.wifi_connected else "OFF"
             status, color = f"IP {self.stats.local_ip}  WIFI {wifi}", theme.MUTED_COLOR
-        self._draw_text(plain_text(status)[:34], 16, 196, self.small_font, color)
+        self._draw_text(plain_text(status)[:34], 16, 195, self.small_font, color)
 
     def _draw_text(self, text: str, x: int, y: int, font: pygame.font.Font, color) -> None:
         """Draw one string at an exact pixel coordinate."""

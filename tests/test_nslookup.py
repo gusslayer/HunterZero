@@ -97,10 +97,22 @@ class NsLookupTests(unittest.TestCase):
         processes = FakeProcessManager()
         screen.handle(OPEN, processes)
         self.assertEqual(screen.phase, "edit_host")
-        for _ in range(10):
+        for _ in range(4):
+            screen.handle(DOWN, processes)
+        for _ in range(6):
             screen.handle(RIGHT, processes)
-        screen.handle(DOWN, processes)
+        screen.handle(OPEN, processes)
+        self.assertEqual(screen.editor.value, "example.co")
+        for _ in range(3):
+            screen.handle(UP, processes)
+        for _ in range(3):
+            screen.handle(LEFT, processes)
+        screen.handle(OPEN, processes)
         self.assertEqual(screen.editor.value, "example.col")
+        for _ in range(3):
+            screen.handle(DOWN, processes)
+        for _ in range(4):
+            screen.handle(RIGHT, processes)
         screen.handle(OPEN, processes)
         self.assertEqual(screen.phase, "settings")
         screen.handle(DOWN, processes)
