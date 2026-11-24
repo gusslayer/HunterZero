@@ -14,7 +14,7 @@ class UpdateScreen:
 
     def __init__(self) -> None:
         """Start the screen on the confirmation phase."""
-        self.title = "ACTUALIZAR HUNTERZERO"
+        self.title = "ACTUALIZAR"
         self.phase = "confirm"
         self.started_at = 0.0
         self.last_sync = 0.0

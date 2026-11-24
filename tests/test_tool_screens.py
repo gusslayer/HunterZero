@@ -6,7 +6,7 @@ import pygame
 
 from core.input import BACK, DOWN, LEFT, OPEN, RIGHT, UP
 from core import theme
-from core.ui.icons import load_icon
+from core.ui.icons import draw_icon, load_icon
 from modules.nmap.screen import NmapScreen
 from modules.ping.screen import PingScreen
 from modules.system_monitor.screen import SystemMonitorScreen
@@ -62,6 +62,19 @@ class ToolScreenTests(unittest.TestCase):
             self.assertIsNotNone(icon, f"Falta assets/icons/{name}.png")
             self.assertGreater(icon.get_width(), 0)
             self.assertGreater(icon.get_height(), 0)
+        pygame.quit()
+
+    def test_scaled_pixel_icon_keeps_binary_alpha(self):
+        """Ensure scaled icons contain no interpolated edge pixels."""
+        pygame.init()
+        surface = pygame.Surface((48, 48), pygame.SRCALPHA)
+        draw_icon(surface, "cpu", pygame.Rect(0, 0, 48, 48), (255, 255, 255))
+        alpha_values = {
+            surface.get_at((x, y)).a
+            for x in range(surface.get_width())
+            for y in range(surface.get_height())
+        }
+        self.assertLessEqual(alpha_values, {0, 255})
         pygame.quit()
 
     def test_ping_manual_ip_and_confirmation_use_only_gamepad_actions(self):

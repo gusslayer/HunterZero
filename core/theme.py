@@ -17,10 +17,10 @@ MUTED_COLOR = (102, 102, 102)
 
 
 def load_font(size: int) -> pygame.font.Font:
-    """Load the bundled, freely licensed Press Start 2P font."""
+    """Load the bundled HackerNoon V2 font from assets/fonts."""
     if size <= 0 or size % 8:
         raise ValueError("El tamaño de fuente debe ser un múltiplo positivo de 8.")
-    font_path = ROOT / "assets" / "fonts" / "PressStart2P-Regular.ttf"
+    font_path = ROOT / "assets" / "fonts" / "HackerNoonV2-Regular.ttf"
     if not font_path.is_file():
         raise FileNotFoundError(f"Falta la fuente requerida: {font_path}")
     return pygame.font.Font(str(font_path), size)

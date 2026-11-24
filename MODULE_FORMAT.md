@@ -35,7 +35,8 @@ Campos:
 - `id`: identificador único y nombre exacto de carpeta.
 - `name`: texto visible en el menú.
 - `description`: descripción breve.
-- `icon`: nombre admitido de Lucide y archivo `assets/icons/<icon>.png`.
+- `icon`: nombre de un PNG existente en `assets/icons/<icon>.png` (preferiblemente
+  un icono de pixelarticons para conservar el estilo pixel art).
   Entre los disponibles están `network`, `gauge`, `folder`, `code-xml`,
   `chart-no-axes-combined`, `terminal`, `radar`, `wifi`, `cpu`, `database`,
   `shield-check`, `search`, `settings`, `lock`, `upload`, `download`,
@@ -86,10 +87,10 @@ mapéalas primero en `core/input.py` y pruébalas sin teclado ni tráfico real.
 
 ## Icono
 
-Coloca un PNG cuadrado transparente de 34x34, 64x64 o 128x128 en
-`assets/icons/<icon>.png`. El nombre debe coincidir con `icon` del manifiesto.
-También puede permanecer el trazado vectorial de respaldo en `core/ui/icons.py`
-mientras se migra el recurso gráfico.
+Coloca un PNG cuadrado transparente en `assets/icons/<icon>.png`. Los iconos de
+pixelarticons usan una cuadrícula original de 24x24 y se escalan con nearest
+neighbor. El nombre debe coincidir con `icon` del manifiesto; conserva la
+atribución y licencia del pack al añadir o sustituir recursos.
 
 ## Registro
 

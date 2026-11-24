@@ -97,8 +97,8 @@ modules/
   nmap/                   # manifiesto, builder, validación y pantalla Nmap
   system_monitor/         # pantalla y ayuda de métricas locales
   proc_monitor/           # lista de procesos activos, estilo top resumido
-assets/fonts/             # Press Start 2P y licencia OFL
-assets/icons/             # PNG originales de los iconos del menú
+assets/fonts/             # HackerNoon V2 y Press Start 2P (licencia OFL)
+assets/icons/             # pixelarticons y PNG Lucide legacy con sus licencias
 config/                   # ejemplo versionado, configuración local ignorada
 state/heartbeats/         # estado runtime; no se sube a Git
 logs/                     # logs de aplicación y comandos
@@ -155,9 +155,9 @@ se indican al terminar para ejecutarlos por SSH.
 - Paquetes APT: `python3`, `python3-venv`, `python3-pygame`,
   `python3-yaml`, `iputils-ping`, `nmap`, `git`, `gpiod` (señales GPIO del
   botón físico), y para SDL `kmsdrm`:
-  `libegl1`, `libegl-mesa0`, `libgles2`, `libgbm1`, `libgl1-mesa-dri`, `libdrm2`
-  y `libegl-dev` (verificado: sin él `pygame` termina con `EGL not initialized`).
-  Sin EGL/GBM/Mesa, `pygame.display.set_mode` falla con `EGL not initialized`.
+  `libegl1`, `libegl-mesa0`, `libgles2`, `libgbm1`, `libgl1-mesa-dri` y
+  `libdrm2`. `libegl-dev` solo aporta archivos de desarrollo; no sustituye al
+  driver EGL/GBM ni a los permisos sobre los nodos DRM.
 - El venv se crea con `--system-site-packages` para reutilizar los bindings de
   Pygame/YAML compilados para ARMv6; no depender de wheels PyPI ARMv6.
 - Usuario estándar agregado a los grupos `input`, `video` y `render` (este último
@@ -174,9 +174,10 @@ se indican al terminar para ejecutarlos por SSH.
   overlays `gpio-shutdown` ni `gpio-led` porque reclamarían esas líneas. El
   servicio se instala en `/usr/local/bin` y funciona aunque la app no esté
   arrancada; no añade reglas sudoers.
-- `core/screen.py` intenta `kmsdrm` y, si EGL falla, `fbcon` (framebuffer del
-  kernel); solo usa `dummy` cuando no se forzó ningún driver. Cada degradación
-  se registra con un aviso en `logs/app.log`.
+- `core/screen.py` intenta `kmsdrm` y, si falla, `fbcon`. No usa `dummy` como
+  degradación automática porque ese driver no muestra salida física. El error
+  incluye los nodos `/dev/dri` y `/dev/fb*` detectados, permisos y comprobaciones
+  recomendadas para KMS/EGL.
 - Probar driver SDL, pantalla y gamepad desde la consola antes de habilitar
   `hunterzero.service` en tty1. El modo KMS/DRM depende de la imagen GPi.
 - `deploy/update.sh` realiza `git pull --ff-only --progress` con salida
@@ -187,9 +188,12 @@ se indican al terminar para ejecutarlos por SSH.
 ## Licencias y calidad
 
 - Código: MIT.
+- HackerNoon V2: fuente del repositorio oficial `hackernoon/font`.
 - Press Start 2P: SIL Open Font License, con `assets/fonts/OFL.txt`.
-- Iconos: librería Lucide distribuida como PNG transparentes en
-  `assets/icons/`, con licencia y atribución originales.
+- Pixelarticons: MIT, con licencia en `assets/icons/PIXELARTICONS_LICENSE.txt`.
+- Pixelarticons: PNG rasterizados en `assets/icons/`, licencia MIT en
+  `assets/icons/PIXELARTICONS_LICENSE.txt`; iconos sin equivalente conservan
+  recursos Lucide con licencia en `assets/icons/LUCIDE_LICENSE.txt`.
 - Ejecutar `python -m unittest discover -s tests -v`. Las pruebas de comandos
   solo verifican argumentos; no envían ping ni inician Nmap.
 - La validación en pantalla/gamepad físicos debe completarse en la GPi real.

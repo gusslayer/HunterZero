@@ -40,17 +40,17 @@ apt-get update
 # deploy/deps.sh, que lee los campos `deps:` de los manifiestos de modules/*/.
 # Todos deben provenir de APT para conservar compatibilidad armhf/ARMv6.
 # Descartados por no usarse en el código: curl, kbd, procps, iproute2, kmod y
-# fonts-dejavu-core (el código lee /proc y /sys directamente y usa la fuente
-# Press Start 2P de assets/fonts). udev y dbus se conservan por la gestión de
+# fonts-dejavu-core (el código lee /proc y /sys directamente y usa las fuentes
+# incluidas en assets/fonts). udev y dbus se conservan por la gestión de
 # entrada (gamepad/teclado) y la del sistema (logind/systemctl).
 # EGL, GLES, GBM, Mesa y libdrm son necesarios en tiempo de ejecución para el
-# driver kmsdrm de SDL2; sin ellos pygame falla con "EGL not initialized".
+# driver kmsdrm de SDL2; los paquetes -dev no sustituyen al driver de pantalla.
 # gpiod aporta gpioset/gpiomon para vigilar el botón físico de encendido.
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
     ca-certificates git sudo udev dbus python3 python3-venv python3-pip \
     python3-pygame python3-yaml gpiod \
     libsdl2-2.0-0 libsdl2-ttf-2.0-0 libsdl2-gfx-1.0-0 \
-    libegl1 libegl-mesa0 libgles2 libgbm1 libgl1-mesa-dri libdrm2 libegl-dev
+    libegl1 libegl-mesa0 libgles2 libgbm1 libgl1-mesa-dri libdrm2
 
 # Verifica que el binario instalado tenga punteros de 32 bits.
 if ! python3 -c 'import struct; raise SystemExit(0 if struct.calcsize("P") == 4 else 1)' >/dev/null 2>&1; then

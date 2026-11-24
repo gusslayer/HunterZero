@@ -7,7 +7,7 @@
        \/            \/          \/               \/   \/               
 ```         
 
-Interfaz modular para GPi Case 2W y Raspberry Pi Zero W, con Pygame, navegación por gamepad y estética pixel art de alto contraste. Toda la interfaz se dibuja en un lienzo virtual de 320x240 y se escala 2x con nearest-neighbor a 640x480; usa negro, blanco y naranja, sin suavizado de tipografía. La fuente Press Start 2P se distribuye bajo SIL Open Font License.
+Interfaz modular para GPi Case 2W y Raspberry Pi Zero W, con Pygame, navegación por gamepad y estética pixel art de alto contraste. Toda la interfaz se dibuja en un lienzo virtual de 320x240 y se escala 2x con nearest-neighbor a 640x480; usa negro, blanco y naranja, sin suavizado de tipografía. El tipo de letra es HackerNoon V2, bundles en `assets/fonts/HackerNoonV2-Regular.ttf` (fuente original: https://github.com/hackernoon/font). Los iconos provienen del pack pixelarticons de halfmage (https://github.com/halfmage/pixelarticons).
 
 > Ping y Nmap son módulos independientes con opciones, validación y comandos propios; comparten únicamente la vista de configuración/ayuda y el editor IPv4. El destino se ingresa octeto por octeto con el D-pad. Ping envía 1–4 paquetes; Nmap usa TCP Connect, 20/50/100 puertos comunes y scripts NSE de la categoría vuln. Solo se aceptan IPv4 privadas y cada ejecución solicita confirmación. El Monitor del Sistema muestra métricas locales. No se incluyen módulos vacíos ni una terminal de comandos.
 
@@ -15,7 +15,7 @@ Interfaz modular para GPi Case 2W y Raspberry Pi Zero W, con Pygame, navegación
 
 - Raspberry Pi Zero W (ARMv6) con Raspberry Pi OS Lite Trixie de 32 bits.
 - Python 3.13 de Trixie (compatible con Python 3.11 o posterior).
-- Paquetes del sistema: `python3-pygame`, `python3-yaml`, `python3-venv`, `iputils-ping`, `nmap`, `git` y `libegl-dev` (sin este último, `pygame` falla con `EGL not initialized` en Pi OS Lite).
+- Paquetes del sistema: `python3-pygame`, `python3-yaml`, `python3-venv`, `iputils-ping`, `nmap`, `git` y las bibliotecas de ejecución EGL/GBM/Mesa para KMS/DRM.
 - GPi conectado como pantalla HDMI y gamepad detectable por SDL/pygame.
 - Para ejecutar la unidad systemd: usuario local sin privilegios, incluido en los grupos `input` y `video`.
 
@@ -61,20 +61,26 @@ En una Pi ya instalada se puede aplicar solo la configuración de pantalla con
 `sudo cp /boot/firmware/config.txt.hunterzero.bak /boot/firmware/config.txt`.
 `deploy/update.sh` no sobrescribe el `config.txt` en cada actualización.
 
-Si `journalctl -u hunterzero.service -b` muestra `pygame.error: EGL not initialized`,
-`core/screen.py` intenta `kmsdrm` y luego `fbcon`, y registra cada fallo en
-`logs/app.log`. Comprueba lo siguiente antes de habilitar el servicio:
+Si `journalctl -u hunterzero.service -b` muestra `EGL not initialized` y luego
+`fbcon not available`, SDL no pudo inicializar EGL sobre KMS/DRM y tampoco existe
+un framebuffer legado utilizable. `core/screen.py` ahora añade al error los
+dispositivos detectados y una pista según los permisos; no se fuerza `dummy`
+porque mostraría una pantalla negra. Comprueba en la propia Pi:
 
 ```bash
-ls -l /dev/dri                 # deben aparecer card0 y renderD128
-id                             # el usuario debe estar en video y render
-sudo dmesg | grep -i vc4       # el driver VC4/KMS debe haberse cargado
-sudo bash deploy/install.sh    # reinstala las librerías EGL/GBM/Mesa y los grupos
-sudo reboot
+ls -l /dev/dri /dev/fb0        # KMS: card0; fbcon solo funciona con /dev/fb0
+id                             # el usuario del servicio necesita acceso a card0
+sudo dmesg | grep -Ei 'vc4|drm|egl'
+systemctl show hunterzero.service -p User -p SupplementaryGroups
 ```
 
-Cierra sesión y vuelve a entrar para que se apliquen los grupos. Comprueba primero
-la interfaz en la consola conectada a la GPi:
+Si falta `/dev/dri/card0`, revisa los overlays `vc4-kms-v3d` y
+`vc4-kms-dpi-generic` de `config.txt` y reinicia. Si el dispositivo existe pero
+no tiene acceso `rw`, corrige la pertenencia a `video` y reinicia el servicio.
+Si `card0` es accesible y EGL sigue fallando, verifica que `libegl-mesa0`,
+`libgbm1` y `libgl1-mesa-dri` estén instalados y que el kernel haya iniciado el
+driver VC4 sin errores. `libegl-dev` por sí solo no proporciona un backend EGL
+funcional. Comprueba primero desde la consola conectada a la GPi:
 
 ```bash
 SDL_VIDEODRIVER=kmsdrm HUNTERZERO_FULLSCREEN=1 .venv/bin/python main.py
@@ -120,7 +126,7 @@ Comando: `cp config/settings.example.json config/settings.json`.
 
 El menú muestra CPU, memoria, temperatura, estado de Wi-Fi, batería (si el kernel la expone) y hora. Las métricas se refrescan cada 5 segundos. La aplicación escribe `state/heartbeats/app.json` cada 5 segundos. El Monitor de Procesos calcula el %CPU entre lecturas sucesivas de `/proc` (no un promedio desde el arranque) y actualiza la lista una vez por segundo. Nmap usa el máximo de 180 s permitido por el lanzador.
 
-La interfaz es de quiosco: no se cierra con B ni con un evento `SDL_QUIT` del cambio de consola/VT; solo termina si systemd detiene el servicio. Los eventos de botones que estaban pulsados durante el arranque se descartan para no entrar en un módulo por accidente. `create_display()` oculta el cursor de SDL justo después de crear la ventana, porque KMSDRM lo dibuja en un plane ajeno al surface de Pygame. La tipografía usa 20/16/12 px (título/cuerpo/detalle) para que los datos se lean en la pantalla de 640x480; los textos largos se recortan al ancho disponible.
+La interfaz es de quiosco: no se cierra con B ni con un evento `SDL_QUIT` del cambio de consola/VT; solo termina si systemd detiene el servicio. Los eventos de botones que estaban pulsados durante el arranque se descartan para no entrar en un módulo por accidente. `create_display()` oculta el cursor de SDL justo después de crear la ventana, porque KMSDRM lo dibuja en un plane ajeno al surface de Pygame. La tipografía HackerNoon V2 usa 16 px para títulos y 8 px para texto en el lienzo virtual; el escalado entero 2x produce píxeles nítidos en la pantalla de 640x480.
 
 En Ping: selecciona **IP DESTINO**, edita sus octetos con el D-pad y pulsa A para guardar; ajusta paquetes y elige **ENVIAR PING**. Revisa la confirmación y pulsa A otra vez para ejecutar o B para cancelar. Nmap tiene su propio destino, cantidad de puertos y confirmación. Ambos permiten cancelar el proceso con B y enseñan el resultado dentro de la GUI. La opción **AYUDA** explica los controles y parámetros de cada pantalla.
 
@@ -133,8 +139,8 @@ modules/ping/          # Especificación, validación, comando y pantalla de Pin
 modules/nmap/          # Especificación, validación, comando y pantalla de Nmap
 modules/system_monitor/ # Pantalla independiente de métricas locales
 modules/proc_monitor/   # Lista de procesos activos, estilo top resumido
-assets/fonts/          # Press Start 2P y licencia OFL
-assets/icons/          # PNG utilizados por los iconos del menú
+assets/fonts/          # HackerNoon V2 de assets/fonts/HackerNoonV2-Regular.ttf
+assets/icons/          # PNG de pixelarticons y iconos legacy para el menú
 config/               # Ejemplo versionado y configuración local ignorada por Git
 state/                # Estado UI y heartbeats locales
 logs/                 # Registros locales
@@ -172,7 +178,11 @@ Pruebas automatizadas: `python -m unittest discover -s tests -v`.
 ## Licencias
 
 - Código: MIT (ver `LICENSE`).
-- Press Start 2P: SIL Open Font License 1.1 (ver `assets/fonts/OFL.txt`).
-- Iconos: [Lucide](https://lucide.dev/) bajo ISC/MIT, distribuidos como PNG
-  transparentes en `assets/icons/`. La licencia original está en
-  `assets/icons/LUCIDE_LICENSE.txt`.
+- Tipo de letra: HackerNoon V2 (original en https://github.com/hackernoon/font).
+  La fuente se ofrece gratis en el repositorio oficial; conserva la atribución.
+  Press Start 2P sigue disponible en `assets/fonts/` con su licencia OFL.
+- Iconos: pack [pixelarticons](https://github.com/halfmage/pixelarticons) de
+  halfmage (MIT; texto en `assets/icons/PIXELARTICONS_LICENSE.txt`),
+  rasterizados como PNG transparentes en `assets/icons/`;
+  los iconos sin equivalente en el pack conservan los PNG originales de
+  [Lucide](https://lucide.dev/) (licencia en `assets/icons/LUCIDE_LICENSE.txt`).
