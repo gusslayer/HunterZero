@@ -59,7 +59,21 @@ sudo reboot
 En una Pi ya instalada se puede aplicar solo la configuración de pantalla con
 `sudo bash deploy/display-config.sh`. Para volver al archivo anterior:
 `sudo cp /boot/firmware/config.txt.hunterzero.bak /boot/firmware/config.txt`.
-`deploy/update.sh` no sobrescribe el `config.txt` en cada actualización.
+`deploy/update.sh` no sobrescribe el `config.txt` en cada actualización, pero sí
+reinstala y habilita `hunterzero-poweroff.service`: el apagado por el interruptor
+físico depende de esa unidad, no de la app. Si el botón dejó de responder tras una
+actualización, comprueba:
+
+```bash
+systemctl status hunterzero-poweroff.service
+journalctl -u hunterzero-poweroff.service -b
+gpioinfo gpiochip0 | grep -E 'GPIO26|GPIO27'
+```
+
+El servicio debe mantenerse en `active (running)`; en el journal debe aparecer
+`Vigilando flanco descendente en GPIO 26`. Si está `inactive` o en bucle de
+reinicio, vuelve a aplicar el instalador con `sudo bash deploy/install.sh` y
+reinicia (`sudo reboot`) para que `config.txt` y el servicio arranquen juntos.
 
 Si `journalctl -u hunterzero.service -b` muestra `EGL not initialized` y luego
 `fbcon not available`, SDL no pudo inicializar EGL sobre KMS/DRM y tampoco existe
@@ -102,10 +116,10 @@ Conecta por SSH y actualiza desde la copia clonada:
 ```bash
 cd ~/HunterZero
 git pull --ff-only
-sudo systemctl restart hunterzero.service
+bash deploy/update.sh   # instala dependencias y el servicio de apagado por GPIO
 ```
 
-También se puede usar `bash deploy/update.sh`, que realiza `git pull --ff-only`, instala en APT los paquetes nuevos declarados por los módulos (`deploy/deps.sh`) y reinicia el servicio. Las preferencias, heartbeats, datos, logs y configuración local quedan fuera de Git.
+También se puede usar `bash deploy/update.sh`, que realiza `git pull --ff-only`, instala en APT los paquetes nuevos declarados por los módulos (`deploy/deps.sh`), reinstala el servicio de apagado físico por GPIO y reinicia la app. Las preferencias, heartbeats, datos, logs y configuración local quedan fuera de Git.
 
 Desde la interfaz elige **ACTUALIZAR HUNTERZERO** en el menú principal y pulsa A. La pantalla muestra el tiempo transcurrido, las últimas líneas del log y un indicador de actividad indeterminado (git no expone un porcentaje real); B cancela. Como la app no es root y no hay terminal para pedir la contraseña de `sudo`, este botón **solo descarga el código**: al terminar indica los pasos que faltan. Para completar la actualización, conecta por SSH y ejecuta `sudo bash deploy/update.sh` (instala dependencias y reinicia el servicio).
 

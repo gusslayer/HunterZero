@@ -214,8 +214,10 @@ se indican al terminar para ejecutarlos por SSH.
   `hunterzero.service` en tty1. El modo KMS/DRM depende de la imagen GPi.
 - `deploy/update.sh` realiza `git pull --ff-only --progress` con salida
   progresiva visible, instala los paquetes APT nuevos declarados por los
-  módulos con `deploy/deps.sh` y reinicia el servicio. Desde la GUI solo se
-  descarga el código; el resto se termina por SSH con sudo.
+  módulos con `deploy/deps.sh`, reinstala y habilita
+  `hunterzero-poweroff.service` (el apagado físico depende de él, no de la app)
+  y reinicia el servicio. Desde la GUI solo se descarga el código; el resto se
+  termina por SSH con sudo.
 
 ## Licencias y calidad
 

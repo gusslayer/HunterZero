@@ -7,7 +7,9 @@ StartLimitIntervalSec=0
 Type=simple
 User=root
 ExecStart=/usr/local/bin/hunterzero-poweroff
-Restart=on-failure
+# Reinicia también tras una salida limpia: si el monitor se detiene por cualquier
+# motivo, el botón físico debe seguir operativo sin intervención manual.
+Restart=always
 RestartSec=2
 StandardOutput=journal
 StandardError=journal

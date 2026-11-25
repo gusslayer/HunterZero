@@ -30,5 +30,20 @@ fi
 # Instala en APT los paquetes nuevos declarados por los módulos tras el pull.
 sudo bash "$APP_DIR/deploy/deps.sh"
 
+# El apagado físico se introdujo en una revisión posterior al instalador inicial:
+# sin esto, un update sustituye el overlay gpio-shutdown pero deja la Pi sin
+# ningún watcher del botón. Mantener la unidad aquí evita ese estado.
+echo "Instalando el servicio de apagado físico por GPIO..."
+sudo install -m 0755 "$APP_DIR/deploy/hunterzero-poweroff.sh" \
+    /usr/local/bin/hunterzero-poweroff
+sudo install -m 0644 "$APP_DIR/deploy/hunterzero-poweroff.service" \
+    /etc/systemd/system/hunterzero-poweroff.service
+sudo systemctl daemon-reload
+if [[ -e /dev/gpiochip0 ]]; then
+    sudo systemctl enable --now hunterzero-poweroff.service
+else
+    echo "Aviso: no existe /dev/gpiochip0; no se habilitó el apagado por GPIO." >&2
+fi
+
 sudo systemctl restart hunterzero.service
 sudo systemctl --no-pager --full status hunterzero.service

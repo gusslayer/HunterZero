@@ -41,9 +41,17 @@ echo "Manteniendo GPIO $POWER_ENABLE_LINE en alto y esperando GPIO $POWER_BUTTON
 # el wait -n lo detecta y systemd reinicia el servicio.
 gpioset -c "$GPIO_CHIP" -C "$CONSUMER" "$POWER_ENABLE_LINE=1" &
 enable_pid=$!
+
+# Registra el nivel inicial para distinguir "botón ya pulsado" de "sin eventos".
+if command -v gpioget >/dev/null 2>&1; then
+    initial_level="$(gpioget -c "$GPIO_CHIP" -C "$CONSUMER" "$POWER_BUTTON_LINE" 2>&1 || true)"
+    echo "GPIO $POWER_BUTTON_LINE al iniciar: $initial_level"
+fi
+
 gpiomon -c "$GPIO_CHIP" -C "$CONSUMER" -e falling -b pull-up -p 100ms -n 1 \
     "$POWER_BUTTON_LINE" &
 monitor_pid=$!
+echo "Vigilando flanco descendente en GPIO $POWER_BUTTON_LINE (chip $GPIO_CHIP)."
 
 cleanup() {
     kill "$enable_pid" "$monitor_pid" 2>/dev/null || true
@@ -61,8 +69,8 @@ wait -n -p finished_pid "$enable_pid" "$monitor_pid"
 finished_status=$?
 set -e
 
-if [[ "$finished_pid" != "$monitor_pid" || "$finished_status" -ne 0 ]]; then
-    echo "Falló la vigilancia GPIO (proceso $finished_pid, código $finished_status)." >&2
+if [[ "${finished_pid:-}" != "$monitor_pid" || "$finished_status" -ne 0 ]]; then
+    echo "Falló la vigilancia GPIO (proceso ${finished_pid:-desconocido}, código $finished_status)." >&2
     exit 1
 fi
 

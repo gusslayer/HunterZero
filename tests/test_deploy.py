@@ -41,6 +41,18 @@ class DeploymentTests(unittest.TestCase):
         self.assertIn("-n 1", script)
         self.assertIn('"$SHUTDOWN_BIN" -h now', script)
 
+    def test_update_reinstalls_the_poweroff_service(self):
+        """An update must not leave the Pi without a GPIO power-button watcher."""
+        update = (ROOT / "deploy" / "update.sh").read_text(encoding="utf-8")
+        self.assertIn("/usr/local/bin/hunterzero-poweroff", update)
+        self.assertIn("/etc/systemd/system/hunterzero-poweroff.service", update)
+        self.assertIn("systemctl enable --now hunterzero-poweroff.service", update)
+
+    def test_poweroff_service_restarts_even_after_clean_exit(self):
+        """Keep monitoring the button if gpiomon stops for any reason."""
+        unit = (ROOT / "deploy" / "hunterzero-poweroff.service").read_text(encoding="utf-8")
+        self.assertIn("Restart=always", unit)
+
     def test_update_uses_visible_progress_without_interactive_prompts(self):
         """Force git progress and disable credential prompts from the kiosk."""
         update = (ROOT / "deploy" / "update.sh").read_text(encoding="utf-8")
