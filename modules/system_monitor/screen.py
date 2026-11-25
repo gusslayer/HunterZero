@@ -6,10 +6,11 @@ import time
 import pygame
 
 from core import theme
-from core.input import BACK, OPEN
+from core.input import BACK, DOWN, OPEN, UP
 from core.process_manager import ProcessManager
 from core.system_stats import SystemStats, disk_usage_percent
 from core.ui.help_view import draw_help_view
+from core.ui.scroll import ScrollState
 from core.ui.text_cache import render_cached
 from core.ui.widgets import draw_frame, plain_text
 
@@ -20,6 +21,7 @@ class SystemMonitorScreen:
     def __init__(self) -> None:
         """Start the monitor on its dashboard with its reusable help closed."""
         self.show_help = False
+        self.help_scroll = ScrollState()
         self.disk_percent = disk_usage_percent(theme.ROOT)
         self.last_disk_refresh = time.monotonic()
 
@@ -30,6 +32,10 @@ class SystemMonitorScreen:
             return True
         if action == OPEN:
             self.show_help = not self.show_help
+        elif self.show_help and action == UP:
+            self.help_scroll.move(-1)
+        elif self.show_help and action == DOWN:
+            self.help_scroll.move(1)
         return False
 
     def sync(self, processes: ProcessManager) -> None:
@@ -53,7 +59,7 @@ class SystemMonitorScreen:
         """Render the local system metrics or the shared gamepad help view."""
         del processes
         if self.show_help:
-            draw_help_view(
+            total, capacity = draw_help_view(
                 surface,
                 title_font,
                 body_font,
@@ -69,7 +75,9 @@ class SystemMonitorScreen:
                     ),
                     ("CONTROLES", ("A alterna esta ayuda; B vuelve al menu.",)),
                 ),
+                self.help_scroll.offset,
             )
+            self.help_scroll.update(total, capacity)
             return
         pygame.draw.rect(surface, theme.BG_COLOR, (0, 28, theme.WIDTH, 184))
         draw_frame(surface, pygame.Rect(10, 32, 300, 136), theme.GRID_COLOR, theme.PANEL_COLOR)
@@ -96,5 +104,5 @@ class SystemMonitorScreen:
     def footer_hints(self) -> list[tuple[str, int]]:
         """Return gamepad guidance for the monitor dashboard or help page."""
         if self.show_help:
-            return [("A METRICAS", 12), ("B MENU", 168)]
+            return [("ARR/ABA TEXTO", 8), ("A METRICAS", 168), ("B MENU", 240)]
         return [("A AYUDA", 12), ("B MENU", 168)]

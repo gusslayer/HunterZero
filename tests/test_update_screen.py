@@ -5,7 +5,7 @@ import unittest
 import pygame
 
 from core import theme
-from core.input import BACK, OPEN
+from core.input import BACK, DOWN, OPEN, UP
 from core.ui.update_screen import UpdateScreen
 
 
@@ -100,6 +100,19 @@ class UpdateScreenTests(unittest.TestCase):
         self.assertEqual(screen.phase, "result")
         self.assertEqual(processes.message, "Ya hay una herramienta en ejecución.")
 
+    def test_long_update_output_can_be_scrolled(self):
+        """Scroll the complete git log instead of showing only its last lines."""
+        screen = UpdateScreen()
+        screen.phase = "result"
+        processes = FakeProcessManager(started=False)
+        processes.output = "\n".join(f"linea {index}" for index in range(30))
+        self.assertGreater(len(screen._result_lines(processes)), 10)
+        self.assertFalse(screen.handle(DOWN, processes))
+        self.assertEqual(screen.result_view.selected, 1)
+        self.assertFalse(screen.handle(UP, processes))
+        self.assertEqual(screen.result_view.selected, 0)
+        self.assertTrue(screen.handle(OPEN, processes))
+
     def test_footer_hints_match_the_current_phase(self):
         """Return action hints for confirm, running, and result phases."""
         screen = UpdateScreen()
@@ -110,7 +123,7 @@ class UpdateScreenTests(unittest.TestCase):
         screen.phase = "running"
         self.assertEqual(screen.footer_hints(), [("B CANCELAR", 12)])
         screen.phase = "result"
-        self.assertEqual(screen.footer_hints(), [("A/B VOLVER", 12)])
+        self.assertEqual(screen.footer_hints(), [("ARR/ABA TEXTO", 8), ("A/B VOLVER", 150)])
 
 
 if __name__ == "__main__":

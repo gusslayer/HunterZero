@@ -20,7 +20,7 @@ from core.ui.hud import draw_hud
 from core.ui.layout import MenuLayout
 from core.ui.text_cache import render_cached
 from core.ui.update_screen import UpdateScreen
-from core.ui.widgets import draw_frame, draw_row, plain_text, wrap_text
+from core.ui.widgets import draw_frame, draw_row, draw_scroll_indicator, plain_text, wrap_text
 from modules.bleeding.screen import BleedingScreen
 from modules.nmap.screen import NmapScreen
 from modules.nslookup.screen import NsLookupScreen
@@ -264,20 +264,24 @@ class HunterZeroApp:
         )
         layout = MenuLayout(pygame.Rect(13, 35, 294, 126), 19, 2)
         first, last = layout.visible_range(len(self.menu.plugins), self.menu.selected)
-        for index in range(first, last):
+        for position, index in enumerate(range(first, last)):
             plugin = self.menu.plugins[index]
-            row = layout.row_rect(index)
-            if row.bottom > layout.bounds.bottom:
-                break
             draw_row(
                 self.virtual_screen,
-                row,
+                layout.row_rect(position),
                 plugin.name,
                 "",
                 index == self.menu.selected,
                 self.body_font,
                 plugin.icon,
             )
+        draw_scroll_indicator(
+            self.virtual_screen,
+            layout.bounds,
+            first > 0,
+            last < len(self.menu.plugins),
+            theme.ACCENT_COLOR,
+        )
 
         draw_frame(
             self.virtual_screen, pygame.Rect(10, 168, 300, 41), theme.GRID_COLOR, theme.PANEL_COLOR

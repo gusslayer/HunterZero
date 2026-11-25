@@ -152,6 +152,16 @@ se indican al terminar para ejecutarlos por SSH.
 
 ## Trazabilidad de UI y errores
 
+- Las listas y textos más largos que el panel usan `core/ui/scroll.py`: el menú
+  principal, el Monitor de Procesos, dispositivos/servicios/resultados de
+  BLEEDING, el log de ACTUALIZAR y las ayudas comparten el mismo estado de
+  desplazamiento. Las filas se dibujan relativas a la ventana visible, por lo
+  que la última opción del menú y los procesos inferiores ya no quedan fuera
+  del marco. D-pad arriba/abajo desplaza; unas flechas indican cuándo hay filas
+  ocultas.
+- BLEEDING tolera que `bleak`/`bluetooth` fallen en el `import` por bibliotecas
+  nativas ausentes (`OSError`), muestra mensajes largos ajustados a línea y
+  permite recorrer todos los eventos del trabajo en la vista de resultado.
 - Los eventos de teclado GPIO, joystick y gamepad se normalizan a acciones
   UP/DOWN/LEFT/RIGHT/OPEN/BACK y START antes de llegar a pantallas. START
   equivale a OPEN dentro de un módulo para que ningún botón quede muerto. El

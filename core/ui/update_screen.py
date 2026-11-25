@@ -5,10 +5,16 @@ import time
 import pygame
 
 from core import theme
-from core.input import BACK, OPEN
+from core.input import BACK, DOWN, OPEN, UP
 from core.process_manager import ProcessManager
+from core.ui.scroll import ScrollState
 from core.ui.text_cache import render_cached
-from core.ui.widgets import plain_text, wrap_text
+from core.ui.widgets import draw_scroll_indicator, plain_text, wrap_text
+
+
+RESULT_TOP = 38
+RESULT_BOTTOM = 208
+RESULT_ROW = 16
 
 
 class UpdateScreen:
@@ -21,6 +27,7 @@ class UpdateScreen:
         self.started_at = 0.0
         self.last_sync = 0.0
         self.activity = 0.0
+        self.result_view = ScrollState(capacity=(RESULT_BOTTOM - RESULT_TOP) // RESULT_ROW)
 
     def handle(self, action, processes: ProcessManager) -> bool:
         """Start the update on OPEN, cancel on BACK, and exit when finished."""
@@ -40,6 +47,13 @@ class UpdateScreen:
             if action == BACK:
                 processes.stop()
                 self.phase = "result"
+            return False
+        self.result_view.update(len(self._result_lines(processes)))
+        if action == UP:
+            self.result_view.move(-1)
+            return False
+        if action == DOWN:
+            self.result_view.move(1)
             return False
         return True
 
@@ -96,12 +110,28 @@ class UpdateScreen:
                 render_cached(small_font, "B CANCELA LA DESCARGA.", theme.ACCENT_COLOR), (16, 194)
             )
         else:
-            lines = (processes.message, *processes.output.splitlines()[-6:])
-            for index, line in enumerate(lines):
+            lines = self._result_lines(processes)
+            self.result_view.update(len(lines))
+            for position, index in enumerate(range(self.result_view.first, self.result_view.last)):
                 color = theme.ACCENT_COLOR if index == 0 else theme.TEXT_COLOR
                 surface.blit(
-                    render_cached(small_font, plain_text(line)[:34], color), (16, 38 + index * 18)
+                    render_cached(small_font, lines[index], color),
+                    (16, RESULT_TOP + position * RESULT_ROW),
                 )
+            draw_scroll_indicator(
+                surface,
+                pygame.Rect(12, RESULT_TOP, 296, RESULT_BOTTOM - RESULT_TOP),
+                self.result_view.has_above,
+                self.result_view.has_below,
+                theme.ACCENT_COLOR,
+            )
+
+    def _result_lines(self, processes: ProcessManager) -> list[str]:
+        """Build wrapped status and captured output lines for the result view."""
+        lines = wrap_text(processes.message, 34)
+        for line in processes.output.splitlines():
+            lines.extend(wrap_text(line, 34))
+        return lines
 
     def _draw_progress(self, surface: pygame.Surface) -> None:
         """Draw a hard-edged indeterminate marker because git reports no percentage."""
@@ -115,4 +145,4 @@ class UpdateScreen:
             return [("A ACTUALIZAR", 12), ("B VOLVER", 168)]
         if self.phase == "running":
             return [("B CANCELAR", 12)]
-        return [("A/B VOLVER", 12)]
+        return [("ARR/ABA TEXTO", 8), ("A/B VOLVER", 150)]

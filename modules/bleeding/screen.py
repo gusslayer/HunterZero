@@ -7,8 +7,9 @@ import pygame
 from core import theme
 from core.input import BACK, DOWN, LEFT, OPEN, RIGHT, UP
 from core.ui.help_view import draw_help_view
+from core.ui.scroll import ScrollState
 from core.ui.text_cache import render_cached
-from core.ui.widgets import draw_frame, draw_row, plain_text, wrap_text
+from core.ui.widgets import draw_frame, draw_row, draw_scroll_indicator, plain_text, wrap_text
 from modules.bleeding.engine import (
     ATTACK_DURATIONS,
     KIND_DEAUTH,
@@ -25,6 +26,11 @@ from modules.bleeding.engine import (
 
 SETTINGS_ROWS = ("MODO", "OBJETIVO", "ESCANEAR", "ENUMERAR", "DEAUTH", "AYUDA", "VOLVER")
 PREPARE_ROWS = ("PAQUETE", "HILOS", "DURACION", "PROTOCOLO", "INICIAR", "CANCELAR")
+LIST_CAPACITY = 8
+RESULT_TOP = 38
+RESULT_BOTTOM = 208
+RESULT_ROW = 16
+RESULT_CAPACITY = (RESULT_BOTTOM - RESULT_TOP) // RESULT_ROW
 
 
 class BleedingScreen:
@@ -42,8 +48,10 @@ class BleedingScreen:
         self.result_message = ""
         self.devices: list[dict] = []
         self.services: list[dict] = []
-        self.device_selection = 0
-        self.service_selection = 0
+        self.device_view = ScrollState(capacity=LIST_CAPACITY)
+        self.service_view = ScrollState(capacity=LIST_CAPACITY)
+        self.result_view = ScrollState(capacity=RESULT_CAPACITY)
+        self.help_scroll = ScrollState()
         self.packet_index = PACKET_SIZES.index(512)
         self.thread_index = THREAD_COUNTS.index(2)
         self.duration_index = ATTACK_DURATIONS.index(30)
@@ -88,14 +96,23 @@ class BleedingScreen:
                 self.phase = "result"
             return False
         if self.phase == "result":
-            if action == OPEN:
+            self.result_view.update(len(self._result_lines()))
+            if action == UP:
+                self.result_view.move(-1)
+            elif action == DOWN:
+                self.result_view.move(1)
+            elif action == OPEN:
                 self.phase = "settings"
             elif action == BACK:
                 self.engine.cancel()
                 return True
             return False
         if self.phase == "help":
-            if action == OPEN:
+            if action == UP:
+                self.help_scroll.move(-1)
+            elif action == DOWN:
+                self.help_scroll.move(1)
+            elif action == OPEN:
                 self.phase = "settings"
             elif action == BACK:
                 return True
@@ -116,11 +133,11 @@ class BleedingScreen:
             return
         if state.kind == KIND_SCAN:
             self.devices = state.devices
-            self.device_selection = 0
+            self.device_view.reset(len(self.devices))
             self.phase = "devices"
         elif state.kind == KIND_ENUM:
             self.services = state.services
-            self.service_selection = 0
+            self.service_view.reset(len(self.services))
             self.phase = "services"
         else:
             self.result_message = state.message
@@ -162,15 +179,17 @@ class BleedingScreen:
         if self.phase == "edit_target":
             return [("ARR/ABA HEX", 8), ("IZQ/DER POS", 118), ("A GUARDAR", 240)]
         if self.phase in ("devices", "services"):
-            return [("ARR/ABA ELEGIR", 8), ("A SELECCIONAR", 168)]
+            return [("ARR/ABA LISTA", 8), ("A SELECCIONAR", 150), ("B VOLVER", 240)]
         if self.phase == "prepare":
             return [("IZQ/DER VALOR", 8), ("A INICIAR", 168), ("B VOLVER", 240)]
         if self.phase == "confirm":
             return [("A ATACAR", 8), ("B CANCELAR", 120)]
         if self.phase == "running":
             return [("B CANCELAR", 8)]
-        if self.phase in ("result", "help"):
-            return [("A OPCIONES", 8), ("B VOLVER", 120)]
+        if self.phase == "result":
+            return [("ARR/ABA TEXTO", 8), ("A OPCIONES", 150), ("B VOLVER", 240)]
+        if self.phase == "help":
+            return [("ARR/ABA TEXTO", 8), ("A OPCIONES", 168), ("B VOLVER", 240)]
         return [("ARR/ABA MOVER", 8), ("IZQ/DER MODO", 136), ("A ABRIR", 240)]
 
     def _handle_settings(self, action, processes) -> bool:
@@ -209,14 +228,16 @@ class BleedingScreen:
         return False
 
     def _handle_devices(self, action) -> bool:
-        """Choose a scanned address as the new DeAuth target."""
+        """Scroll discovered devices and choose one as the new DeAuth target."""
         if self.devices:
+            self.device_view.update(len(self.devices))
             if action == UP:
-                self.device_selection = (self.device_selection - 1) % len(self.devices)
+                self.device_view.move(-1)
             elif action == DOWN:
-                self.device_selection = (self.device_selection + 1) % len(self.devices)
+                self.device_view.move(1)
             elif action == OPEN:
-                self.editor = self._make_editor(self.devices[self.device_selection]["address"])
+                device = self.devices[self.device_view.selected]
+                self.editor = self._make_editor(device["address"])
                 self.selected = 1
                 self.result_message = "OBJETIVO SELECCIONADO"
                 self.phase = "settings"
@@ -226,12 +247,13 @@ class BleedingScreen:
         return False
 
     def _handle_services(self, action) -> bool:
-        """Browse enumerated services and return to the settings view."""
+        """Scroll enumerated services and return to the settings view."""
         if self.services:
+            self.service_view.update(len(self.services))
             if action == UP:
-                self.service_selection = (self.service_selection - 1) % len(self.services)
+                self.service_view.move(-1)
             elif action == DOWN:
-                self.service_selection = (self.service_selection + 1) % len(self.services)
+                self.service_view.move(1)
         if action in (OPEN, BACK):
             self.phase = "settings"
         return False
@@ -293,6 +315,14 @@ class BleedingScreen:
             ),
             processes,
         )
+
+    def _result_lines(self) -> list[str]:
+        """Build the wrapped result message plus all recorded job events."""
+        state = self.engine.snapshot()
+        lines = wrap_text(self.result_message or state.message, 34)
+        for event in state.events:
+            lines.extend(wrap_text(event, 34))
+        return lines
 
     def _draw_settings(self, surface, font, small_font) -> None:
         """Draw the main rows, selected mode, target, and availability status."""
@@ -356,7 +386,7 @@ class BleedingScreen:
         lines = (
             f"{state.kind} EN CURSO  {elapsed}S",
             f"OBJETIVO: {self.editor.value}",
-            plain_text(state.message)[:34],
+            *wrap_text(state.message, 34)[:2],
         )
         for index, line in enumerate(lines):
             surface.blit(render_cached(font, line, theme.ACCENT_COLOR), (16, 38 + index * 16))
@@ -372,20 +402,29 @@ class BleedingScreen:
         if not self.devices:
             surface.blit(render_cached(font, "SIN RESULTADOS", theme.MUTED_COLOR), (16, 60))
             return
-        for index, device in enumerate(self.devices[:8]):
-            row = pygame.Rect(12, 52 + index * 17, 296, 15)
+        self.device_view.update(len(self.devices))
+        for position, index in enumerate(range(self.device_view.first, self.device_view.last)):
+            device = self.devices[index]
+            row = pygame.Rect(12, 52 + position * 17, 296, 15)
             draw_row(
                 surface,
                 row,
                 str(device.get("name", ""))[:14],
                 "",
-                index == self.device_selection,
+                index == self.device_view.selected,
                 font,
             )
             surface.blit(
                 render_cached(font, str(device.get("address", ""))[:17], theme.ACCENT_COLOR),
                 (150, row.y + 3),
             )
+        draw_scroll_indicator(
+            surface,
+            pygame.Rect(12, 52, 296, LIST_CAPACITY * 17),
+            self.device_view.has_above,
+            self.device_view.has_below,
+            theme.ACCENT_COLOR,
+        )
 
     def _draw_services(self, surface, font) -> None:
         """List discovered services with a short UUID for reference."""
@@ -393,32 +432,47 @@ class BleedingScreen:
         if not self.services:
             surface.blit(render_cached(font, "SIN RESULTADOS", theme.MUTED_COLOR), (16, 60))
             return
-        for index, service in enumerate(self.services[:8]):
-            row = pygame.Rect(12, 52 + index * 17, 296, 15)
+        self.service_view.update(len(self.services))
+        for position, index in enumerate(range(self.service_view.first, self.service_view.last)):
+            service = self.services[index]
+            row = pygame.Rect(12, 52 + position * 17, 296, 15)
             draw_row(
                 surface,
                 row,
                 str(service.get("name", ""))[:18],
                 str(service.get("uuid", ""))[-12:],
-                index == self.service_selection,
+                index == self.service_view.selected,
                 font,
             )
+        draw_scroll_indicator(
+            surface,
+            pygame.Rect(12, 52, 296, LIST_CAPACITY * 17),
+            self.service_view.has_above,
+            self.service_view.has_below,
+            theme.ACCENT_COLOR,
+        )
 
     def _draw_result(self, surface, font) -> None:
-        """Show the final message and a bounded tail of job events."""
-        surface.blit(
-            render_cached(font, plain_text(self.result_message)[:34], theme.ACCENT_COLOR), (16, 38)
-        )
-        state = self.engine.snapshot()
-        for index, event in enumerate(state.events[-5:]):
+        """Show the wrapped result message and scroll through all job events."""
+        lines = self._result_lines()
+        self.result_view.update(len(lines))
+        for position, index in enumerate(range(self.result_view.first, self.result_view.last)):
+            color = theme.ACCENT_COLOR if index == 0 else theme.MUTED_COLOR
             surface.blit(
-                render_cached(font, plain_text(event)[:34], theme.MUTED_COLOR),
-                (16, 62 + index * 16),
+                render_cached(font, lines[index], color),
+                (16, RESULT_TOP + position * RESULT_ROW),
             )
+        draw_scroll_indicator(
+            surface,
+            pygame.Rect(12, RESULT_TOP, 296, RESULT_BOTTOM - RESULT_TOP),
+            self.result_view.has_above,
+            self.result_view.has_below,
+            theme.ACCENT_COLOR,
+        )
 
     def _draw_help(self, surface, font, small_font) -> None:
         """Explain controls, limits, and the authorized-use requirement."""
-        draw_help_view(
+        total, capacity = draw_help_view(
             surface,
             font,
             font,
@@ -440,4 +494,6 @@ class BleedingScreen:
                     ),
                 ),
             ),
+            self.help_scroll.offset,
         )
+        self.help_scroll.update(total, capacity)

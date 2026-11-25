@@ -6,6 +6,7 @@ from core import theme
 from core.input import BACK, DOWN, LEFT, OPEN, RIGHT, UP
 from core.ui.help_view import draw_help_view
 from core.ui.hostname_editor import HostnameEditor
+from core.ui.scroll import ScrollState
 from core.ui.text_cache import render_cached
 from core.ui.widgets import draw_frame, draw_row, plain_text, wrap_text
 from modules.nslookup.main import (
@@ -28,6 +29,7 @@ class NsLookupScreen:
         self.selected = 0
         self.phase = "settings"
         self.addresses: list[str] = []
+        self.help_scroll = ScrollState()
 
     def handle(self, action, processes) -> bool:
         """Route D-pad actions through editing, confirmation, and result views."""
@@ -54,7 +56,11 @@ class NsLookupScreen:
                 return True
             return False
         if self.phase == "help":
-            if action == OPEN:
+            if action == UP:
+                self.help_scroll.move(-1)
+            elif action == DOWN:
+                self.help_scroll.move(1)
+            elif action == OPEN:
                 self.phase = "settings"
             elif action == BACK:
                 return True
@@ -83,7 +89,7 @@ class NsLookupScreen:
             self.editor.draw(surface, body_font, small_font)
             return
         if self.phase == "help":
-            draw_help_view(
+            total, capacity = draw_help_view(
                 surface,
                 title_font,
                 body_font,
@@ -105,7 +111,9 @@ class NsLookupScreen:
                         ),
                     ),
                 ),
+                self.help_scroll.offset,
             )
+            self.help_scroll.update(total, capacity)
             return
         if self.phase == "settings":
             self._draw_settings(surface, body_font)
@@ -125,7 +133,9 @@ class NsLookupScreen:
             return [("A CONSULTAR", 8), ("B CANCELAR", 168)]
         if self.phase == "running":
             return [("B CANCELAR", 8)]
-        if self.phase in ("result", "help"):
+        if self.phase == "help":
+            return [("ARR/ABA TEXTO", 8), ("A VOLVER", 168), ("B SALIR", 240)]
+        if self.phase == "result":
             return [("A OPCIONES", 8), ("B VOLVER", 168)]
         return [("UP/DOWN MOVER", 8), ("IZQ/DER TIPO", 118), ("A ABRIR", 250)]
 

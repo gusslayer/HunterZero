@@ -9,6 +9,7 @@ from core.input import BACK, DOWN, LEFT, OPEN, RIGHT, UP
 from core.process_manager import ProcessManager
 from core.system_stats import SystemStats
 from core.ui.help_view import draw_help_view
+from core.ui.scroll import ScrollState
 from core.ui.target_editor import IPv4Editor
 from core.ui.text_cache import render_cached
 from core.ui.widgets import draw_frame, draw_row, plain_text, wrap_text
@@ -51,6 +52,7 @@ class ParameterizedToolScreen:
         self.target = IPv4Editor()
         self.phase = "settings"
         self.selected = 0
+        self.help_scroll = ScrollState()
         if option_values:
             self.rows = ("IP DESTINO", parameter_label, operation_label, option_label, "AYUDA", "VOLVER")
         else:
@@ -81,7 +83,11 @@ class ParameterizedToolScreen:
                 return True
             return False
         if self.phase == "help":
-            if action == OPEN:
+            if action == UP:
+                self.help_scroll.move(-1)
+            elif action == DOWN:
+                self.help_scroll.move(1)
+            elif action == OPEN:
                 self.phase = "settings"
             elif action == BACK:
                 return True
@@ -108,14 +114,16 @@ class ParameterizedToolScreen:
             self.target.draw(surface, body_font, body_font, small_font)
             return
         if self.phase == "help":
-            draw_help_view(
+            total, capacity = draw_help_view(
                 surface,
                 title_font,
                 body_font,
                 small_font,
                 f"AYUDA {self.title}",
                 self.help_sections,
+                self.help_scroll.offset,
             )
+            self.help_scroll.update(total, capacity)
             return
         pygame.draw.rect(surface, theme.BG_COLOR, (0, 28, theme.WIDTH, 184))
         if self.phase == "settings":
@@ -141,7 +149,9 @@ class ParameterizedToolScreen:
             return [("A CONFIRMAR", 12), ("B CANCELAR", 168)]
         if self.phase == "running":
             return [("B CANCELAR", 12)]
-        if self.phase in ("result", "help"):
+        if self.phase == "help":
+            return [("ARR/ABA TEXTO", 8), ("A VOLVER", 168), ("B SALIR", 240)]
+        if self.phase == "result":
             return [("A OPCIONES", 12), ("B VOLVER", 168)]
         return [("UP/DOWN MOVER", 8), ("IZQ/DER AJUSTAR", 118), ("A ABRIR", 250)]
 

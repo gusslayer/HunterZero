@@ -40,6 +40,23 @@ def draw_chevron(surface: pygame.Surface, rect: pygame.Rect, color) -> None:
     )
 
 
+def draw_scroll_indicator(surface: pygame.Surface, rect: pygame.Rect, has_above: bool, has_below: bool, color) -> None:
+    """Draw small arrows when a panel has rows hidden above or below."""
+    x = rect.right - 6
+    if has_above:
+        pygame.draw.polygon(
+            surface,
+            color,
+            [(x - 3, rect.y + 3), (x + 3, rect.y + 3), (x, rect.y + 7)],
+        )
+    if has_below:
+        pygame.draw.polygon(
+            surface,
+            color,
+            [(x - 3, rect.bottom - 7), (x + 3, rect.bottom - 7), (x, rect.bottom - 3)],
+        )
+
+
 def draw_keycap(surface: pygame.Surface, font: pygame.font.Font, label: str, x: int, y: int, color) -> int:
     """Draw a boxed action key and return its width so the caption can follow."""
     rendered = font.render(plain_text(label), False, color)

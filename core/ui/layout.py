@@ -16,17 +16,22 @@ class MenuLayout:
         self.row_height = row_height
         self.padding = padding
 
-    def row_rect(self, index: int) -> pygame.Rect:
-        """Return the pixel rectangle for a menu item at the given index."""
+    @property
+    def capacity(self) -> int:
+        """Return how many complete rows fit inside the visible bounds."""
+        return max(1, self.bounds.height // (self.row_height + self.padding))
+
+    def row_rect(self, position: int) -> pygame.Rect:
+        """Return the rectangle for a row at a position inside the visible window."""
         return pygame.Rect(
             self.bounds.x,
-            self.bounds.y + index * (self.row_height + self.padding),
+            self.bounds.y + position * (self.row_height + self.padding),
             self.bounds.width,
             self.row_height,
         )
 
     def visible_range(self, count: int, selection: int) -> tuple[int, int]:
         """Calculate the index range needed to keep the selection visible."""
-        capacity = max(1, (self.bounds.height + self.padding) // (self.row_height + self.padding))
+        capacity = self.capacity
         first = max(0, min(selection - capacity // 2, count - capacity))
         return first, min(count, first + capacity)

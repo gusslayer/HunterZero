@@ -22,7 +22,9 @@ try:
     from bleak import BleakClient, BleakScanner
 
     BLEAK_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError):
+    # Una librería nativa ausente (por ejemplo libbluetooth) también puede
+    # fallar en import: el módulo debe seguir visible y explicar el motivo.
     bleak = None
     BleakClient = None
     BleakScanner = None
@@ -32,7 +34,7 @@ try:
     import bluetooth
 
     PYBLUEZ_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError):
     bluetooth = None
     PYBLUEZ_AVAILABLE = False
 
